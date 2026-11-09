@@ -1,38 +1,198 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Site oficial do 1º Campeonato Babigol SLZ de FIFA 26 Pro Clubs. Acompanhe as inscrições, o sorteio dos grupos, os resultados e o mata-mata."><title>1º Campeonato Babigol SLZ</title><style>
-:root{--navy:#06172f;--blue:#102c50;--gold:#e6b753;--white:#f7f5ee}*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#07142a,#102b4c 70%,#07142a);color:var(--white);font-family:Inter,system-ui,Arial,sans-serif}header{background:linear-gradient(90deg,#061327,#102d53);border-bottom:2px solid #b68a38;position:sticky;top:0;z-index:5}.wrap{max-width:1160px;margin:auto;padding:20px}.brand{display:flex;gap:15px;align-items:center}.emblem{width:68px;height:75px;display:grid;place-items:center;clip-path:polygon(50% 0,94% 22%,94% 76%,50% 100%,6% 76%,6% 22%);background:linear-gradient(125deg,#fff0a2,#b67b21,#fce19a);padding:5px;flex-shrink:0}.emblem>div{clip-path:inherit;background:#071a37;width:100%;height:100%;display:grid;place-items:center;text-align:center;font-weight:1000;font-size:12px;line-height:1.3;color:#f5c768}.brand h1{font-size:clamp(21px,4vw,33px);margin:0}.sub{color:#d5b979;font-size:13px}nav{display:flex;gap:8px;overflow-x:auto;padding:0 20px 14px;max-width:1160px;margin:auto}button,.btn{border:1px solid #b99550;background:#102b4b;color:white;border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:700}button:hover,.active{background:#d4a64e!important;color:#09182b!important}main{max-width:1160px;margin:auto;padding:22px 20px 60px}.hero{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center;background:radial-gradient(circle at 85% 20%,#294970,#091a33 68%);border:1px solid #a67b36;border-radius:22px;padding:25px;margin-bottom:22px}.hero h2{font-size:clamp(27px,5vw,49px);line-height:1.07;margin:8px 0}.hero p{color:#d6dbe4}.heroart{font-size:100px;text-align:center;filter:drop-shadow(0 5px 20px #e9b34b70)}.gold{color:var(--gold)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.stat,.panel{background:#0d2441;border:1px solid #35506d;border-radius:16px;padding:19px}.stat strong{display:block;font-size:27px;color:var(--gold)}.stat small{color:#aebed1}.panel{margin:15px 0}h3{margin:0 0 15px;color:#f6d48a}h4{margin:0 0 10px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.player{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #29415e}.player span{flex:1}input,select{background:#06182e;border:1px solid #56708e;border-radius:9px;color:white;padding:10px;min-width:0;width:100%;font:inherit}input[type=number]{width:72px}.small{font-size:12px;color:#aabbd0}.muted{color:#aabbd0}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.row button{flex:0 0 auto}.tabs{display:none}.tabs.on{display:block}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:10px 6px;border-bottom:1px solid #2b425d}th{color:#edc574}td.num,th.num{text-align:center}.match{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #2a4260}.match .team{flex:1;min-width:0;font-size:13px}.match .team:last-child{text-align:right}.match input{width:58px;text-align:center}.pill{border-radius:99px;padding:5px 9px;background:#23446a;color:#eec979;font-size:12px}.rounds{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.fixture{border:1px solid #4b5e73;background:#07192f;border-radius:12px;padding:12px;margin-bottom:12px}.fixture b{display:block;padding:6px 0}.fixture b+b{border-top:1px solid #27415c}.actions{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0}.danger{border-color:#a55454;color:#ffc7c7}.notice{background:#172d45;border-left:3px solid #e1b45c;padding:12px;border-radius:6px;color:#d5dce5;font-size:13px}.money{font-size:29px;color:#f2cb73;font-weight:900}.footer{text-align:center;color:#90a4bf;font-size:12px;margin:30px} @media(max-width:760px){.hero{grid-template-columns:1fr}.heroart{font-size:65px}.grid,.rounds{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.wrap{padding:12px}main{padding:14px}nav{padding:0 12px 12px}.brand h1{font-size:20px}.panel{padding:13px}.match input{width:45px;padding:8px 4px}} </style></head><body>
-<header><div class="wrap brand"><div class="emblem"><div>♛<br>BABIGOL<br>SLZ</div></div><div><h1>1º CAMPEONATO <span class="gold">BABIGOL SLZ</span></h1><div class="sub">FIFA 26 PRO CLUBS · PC · XBOX · PS5</div></div></div><nav id="nav"></nav></header>
-<main><section class="hero"><div><div class="pill" style="display:inline-block">🏆 PRIMEIRA EDIÇÃO · 2026</div><h2>O CAMINHO PARA A <span class="gold">GLÓRIA.</span></h2><p>21 de novembro · 11h às 16h · 12 participantes · 3 grupos · mata-mata até a grande final.</p><div class="row"><button onclick="tab('inscricoes')">Cadastrar nicks</button><button onclick="tab('grupos')">Ver grupos</button></div></div><div class="heroart">🏆⚽</div></section><div class="stats" id="stats"></div>
-<section id="inicio" class="tabs on"><div class="grid"><div class="panel"><h3>📅 O evento</h3><p>21/11/2026, das 11h às 16h</p><p>Chopp 50 litros, churrasco e premiação.</p><p class="small">Prazo de confirmação: 10/11.</p></div><div class="panel"><h3>⚽ Regulamento</h3><p>3 grupos de 4; todos contra todos em jogo único.</p><p>Passam 1º e 2º de cada grupo + os 2 melhores terceiros.</p><p>Quartas → Semifinal → Final.</p></div><div class="panel"><h3>💰 Contribuição sugerida</h3><div class="money">R$ 130</div><p>por participante, com margem de segurança.</p><button onclick="tab('custos')">Ver orçamento</button></div></div><div class="panel"><h3>🏅 Premiação</h3><p>🥇 1º lugar — Troféu Babigol SLZ</p><p class="small">Valor da premiação não incluído no orçamento.</p></div></section>
-<section id="inscricoes" class="tabs"><div class="panel"><h3>👥 Inscrição dos 12 participantes</h3><p class="muted">Preencha os nicks. A lista vem com os 12 nomes confirmados; você pode editar os nomes e salvar.</p><div class="grid" id="players"></div><div class="actions"><button onclick="save()">Salvar inscrições</button></div></div></section>
-<section id="sorteio" class="tabs"><div class="panel"><h3>🎲 Sorteio oficial dos grupos</h3><p>Os 12 participantes serão distribuídos aleatoriamente em 3 grupos de 4, sem repetições.</p><div class="notice">Atenção: um novo sorteio apaga os placares cadastrados e redefine o chaveamento.</div><div class="actions"><button onclick="draw()">Sortear grupos A, B e C</button><button onclick="tab('grupos')">Visualizar grupos</button></div></div></section>
-<section id="grupos" class="tabs"><div id="groupcards" class="grid"></div></section>
-<section id="resultados" class="tabs"><div class="panel"><h3>📝 Registrar placares</h3><p class="muted">Digite somente os gols. A classificação e o mata-mata serão atualizados automaticamente.</p><div id="games"></div><button onclick="saveScores()">Salvar resultados</button></div></section>
-<section id="chaveamento" class="tabs"><div class="panel"><h3>🏆 Chaveamento — Quartas, Semifinal e Final</h3><p class="small">Quartas: 1º A × melhor 3º; 1º B × segundo melhor 3º; 1º C × 2º A; 2º B × 2º C. Quando necessário, os dois terceiros são trocados para evitar confronto do mesmo grupo nas quartas.</p><div id="bracket" class="rounds"></div><div class="notice">Em caso de empate no mata-mata, registre no campo de desempate qual time avançou (por exemplo, após pênaltis).</div></div></section>
-<section id="custos" class="tabs"><div class="panel"><h3>🥩 Churrasco e chopp — 12 pessoas</h3><div id="budget"></div><p class="small">Valores estimados; confirme preços com os fornecedores. Não inclui compra de troféu ou premiação extra.</p></div></section>
-<div class="actions"><button onclick="exportData()">⬇ Exportar dados</button><button onclick="document.getElementById('import').click()">⬆ Importar dados</button><input id="import" type="file" accept=".json" style="display:none" onchange="importData(event)"><button class="danger" onclick="resetAll()">Reiniciar campeonato</button></div><div class="notice">Os dados desta versão ficam salvos neste navegador. Para transferir o campeonato entre celulares, use Exportar/Importar. Não há sincronização automática entre participantes.</div><div class="footer">BABIGOL SLZ · PRIMEIRA EDIÇÃO · 2026</div></main>
-<script>
-const names=['Danillo Lopes','Távora','Danillo Araújo','Brian','Tainan','Wesley','Charles','Gustavo','Wellington','Erick','Leandro','Saulo'];
-const defaults=()=>({players:names.map((name,i)=>({id:i,name,nick:''})),groups:null,scores:{},ko:{}});let data;try{data=JSON.parse(localStorage.getItem('babigol2026'))||defaults()}catch{data=defaults()}
-const tabs=[['inicio','Início'],['inscricoes','Inscrições'],['sorteio','Sorteio'],['grupos','Grupos'],['resultados','Resultados'],['chaveamento','Chaveamento'],['custos','Churrasco']];
-const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),label=id=>{let p=data.players.find(p=>p.id===id);return p?(p.nick.trim()||p.name):'A definir'},persist=()=>localStorage.setItem('babigol2026',JSON.stringify(data));
-function tab(id){document.querySelectorAll('.tabs').forEach(x=>x.classList.toggle('on',x.id===id));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));render();window.scrollTo({top:0,behavior:'smooth'})}
-$('nav').innerHTML=tabs.map(([id,t])=>'<button data-tab="'+id+'" onclick="tab(\''+id+'\')">'+t+'</button>').join('');
-function fixtures(){if(!data.groups)return [];return data.groups.flatMap((g,gi)=>[[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]].map(([a,b],i)=>({key:gi+'-'+i,a:g[a],b:g[b],g:gi})))}
-function standings(g){let ids=data.groups[g],rows=ids.map(id=>({id,p:0,j:0,v:0,e:0,d:0,gp:0,gc:0,sg:0}));for(const f of fixtures().filter(f=>f.g===g)){let s=data.scores[f.key];if(!s||s.a===''||s.b===''||s.a==null||s.b==null)continue;let a=rows.find(r=>r.id===f.a),b=rows.find(r=>r.id===f.b),x=Number(s.a),y=Number(s.b);a.j++;b.j++;a.gp+=x;a.gc+=y;b.gp+=y;b.gc+=x;a.sg+=x-y;b.sg+=y-x;if(x>y){a.v++;b.d++;a.p+=3}else if(y>x){b.v++;a.d++;b.p+=3}else{a.e++;b.e++;a.p++;b.p++}}return rows.sort((a,b)=>b.p-a.p||b.sg-a.sg||b.gp-a.gp||a.id-b.id)}
-function complete(){return fixtures().length===18&&fixtures().every(f=>{let s=data.scores[f.key];return s&&s.a!==''&&s.b!==''&&s.a!=null&&s.b!=null})}
-function qualifiers(){if(!complete())return null;let r=[0,1,2].map(standings);let third=r.map((x,i)=>({...x[2],g:i})).sort((a,b)=>b.p-a.p||b.sg-a.sg||b.gp-a.gp||a.id-b.id);return {r,third}}
-function knockFixtures(){let q=qualifiers();if(!q)return [];let {r,third}=q;let t=[third[0],third[1]];if(t[0].g===0||t[1].g===1){if(t[1].g!==0&&t[0].g!==1)t.reverse()}let pairs=[[r[0][0].id,t[0].id],[r[1][0].id,t[1].id],[r[2][0].id,r[0][1].id],[r[1][1].id,r[2][1].id]];let out=pairs.map((p,i)=>({key:'q'+i,a:p[0],b:p[1],round:'Quartas'}));const winner=f=>{if(f.a==null||f.b==null)return null;let s=data.ko[f.key];if(!s||s.a===''||s.b===''||s.a==null||s.b==null)return null;let x=Number(s.a),y=Number(s.b);return x>y?f.a:y>x?f.b:s.win===String(f.a)?f.a:s.win===String(f.b)?f.b:null};let semi=[{key:'s0',a:winner(out[0]),b:winner(out[1]),round:'Semifinal'},{key:'s1',a:winner(out[2]),b:winner(out[3]),round:'Semifinal'}];return [...out,...semi,{key:'final',a:winner(semi[0]),b:winner(semi[1]),round:'Final'}]}
-function render(){let filled=data.players.filter(p=>p.nick.trim()).length;$('stats').innerHTML=[['12','Participantes'],[filled+'/12','Nicks cadastrados'],[data.groups?'3':'0','Grupos sorteados'],[fixtures().filter(f=>{let s=data.scores[f.key];return s&&s.a!==''&&s.b!==''}).length+'/18','Jogos dos grupos']].map(([n,t])=>'<div class="stat"><strong>'+n+'</strong><small>'+t+'</small></div>').join('');$('players').innerHTML=data.players.map(p=>'<div class="panel"><label class="small">PARTICIPANTE '+(p.id+1)+'</label><input aria-label="Nome" id="name'+p.id+'" value="'+esc(p.name)+'" placeholder="Nome"><label class="small">NICK / TIME</label><input aria-label="Nick" id="nick'+p.id+'" value="'+esc(p.nick)+'" placeholder="Digite o nick"></div>').join('');
-$('groupcards').innerHTML=data.groups?data.groups.map((group,g)=>{let r=standings(g);return '<div class="panel"><h3>GRUPO '+('ABC'[g])+'</h3><table><tr><th>Time</th><th class="num">J</th><th class="num">P</th><th class="num">SG</th></tr>'+r.map((p,i)=>'<tr><td>'+(i<2?'🟡 ':'')+esc(label(p.id))+'</td><td class="num">'+p.j+'</td><td class="num"><b>'+p.p+'</b></td><td class="num">'+p.sg+'</td></tr>').join('')+'</table></div>'}).join(''):'<div class="panel"><h3>Aguardando sorteio</h3><p>Cadastre os nicks e clique em Sorteio.</p></div>';
-$('games').innerHTML=data.groups?[0,1,2].map(g=>'<h3>Grupo '+('ABC'[g])+'</h3>'+fixtures().filter(f=>f.g===g).map(f=>{let s=data.scores[f.key]||{a:'',b:''};return '<div class="match"><div class="team">'+esc(label(f.a))+'</div><input type="number" min="0" max="99" id="a'+f.key+'" value="'+esc(s.a)+'"><span>×</span><input type="number" min="0" max="99" id="b'+f.key+'" value="'+esc(s.b)+'"><div class="team">'+esc(label(f.b))+'</div></div>'}).join('')).join(''):'<p>Faça o sorteio primeiro.</p>';
-let k=knockFixtures();$('bracket').innerHTML=k.length?['Quartas','Semifinal','Final'].map(round=>'<div><h3>'+round+'</h3>'+k.filter(f=>f.round===round).map(f=>{let s=data.ko[f.key]||{a:'',b:'',win:''};return '<div class="fixture"><b>'+esc(f.a==null?'A definir':label(f.a))+'</b><b>'+esc(f.b==null?'A definir':label(f.b))+'</b><div class="row"><input type="number" min="0" id="ka'+f.key+'" value="'+esc(s.a)+'" placeholder="Gols"><span style="flex:0">×</span><input type="number" min="0" id="kb'+f.key+'" value="'+esc(s.b)+'" placeholder="Gols"></div><select id="kw'+f.key+'"><option value="">Desempate (se necessário)</option>'+[f.a,f.b].filter(x=>x!=null).map(id=>'<option value="'+id+'" '+(s.win===String(id)?'selected':'')+'>'+esc(label(id))+'</option>').join('')+'</select><button style="width:100%;margin-top:8px" onclick="saveKO()">Salvar placar</button></div>'}).join('')+'</div>').join(''):'<div class="notice">O chaveamento será liberado quando todos os 18 jogos da fase de grupos tiverem placar registrado.</div>';
-let items=[['Chopp 50 L',800],['Picanha 1,3 kg',130],['Fraldinha 1,5 kg',82.5],['Alcatra 1 kg',60],['Toscana premium 1,2 kg',36],['Lombo/pernil suíno 1 kg',30],['Sobrecoxa desossada 1 kg',26],['Farofa 800 g',20],['Vinagrete 1,5 kg',30],['Arroz cru 800 g',8],['Pão de alho 12 un.',36],['Carvão 6 kg',55],['Sal e temperos',20],['Água e gelo',70],['Descartáveis',35]];let sum=items.reduce((a,b)=>a+b[1],0);$('budget').innerHTML='<table>'+items.map(([n,v])=>'<tr><td>'+n+'</td><td style="text-align:right">R$ '+v.toFixed(2).replace('.',',')+'</td></tr>').join('')+'<tr><th>Total</th><th style="text-align:right">R$ '+sum.toFixed(2).replace('.',',')+'</th></tr></table><p>Por pessoa: <b>R$ '+(sum/12).toFixed(2).replace('.',',')+'</b> · Sugestão com margem: <b>R$ 130,00</b></p>'}
-function save(){data.players.forEach(p=>{p.name=$('name'+p.id).value.trim()||names[p.id];p.nick=$('nick'+p.id).value.trim()});persist();render();alert('Inscrições salvas neste navegador.')}
-function draw(){if(!confirm('Sortear os grupos? Isso apagará os resultados existentes.'))return;let ids=data.players.map(p=>p.id);for(let i=ids.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}data.groups=[ids.slice(0,4),ids.slice(4,8),ids.slice(8,12)];data.scores={};data.ko={};persist();tab('grupos')}
-function saveScores(){for(const f of fixtures()){let a=$('a'+f.key).value,b=$('b'+f.key).value;if((a===''&&b!=='')||(a!==''&&b==='')){alert('Preencha os dois placares ou deixe ambos vazios.');return}data.scores[f.key]={a,b}}data.ko={};persist();render();alert('Resultados salvos e classificação atualizada.')}
-function saveKO(){let fs=knockFixtures();for(const f of fs){let a=$('ka'+f.key)?.value??'',b=$('kb'+f.key)?.value??'',win=$('kw'+f.key)?.value??'';if(a!==''&&b!==''&&Number(a)===Number(b)&&!win){alert('Empate em '+f.round+': escolha quem avançou.');return}data.ko[f.key]={a,b,win}}persist();render();alert('Mata-mata atualizado.')}
-function exportData(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='babigol-slz-campeonato.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function importData(e){let file=e.target.files[0];if(!file)return;let reader=new FileReader();reader.onload=()=>{try{let x=JSON.parse(reader.result);if(!Array.isArray(x.players)||x.players.length!==12)throw Error();data=x;persist();render();alert('Dados importados.')}catch{alert('Arquivo inválido.')}};reader.readAsText(file)}
-function resetAll(){if(confirm('Apagar todos os nicks, grupos e placares deste navegador?')){data=defaults();persist();tab('inicio')}}
-render();tab('inicio');
-</script></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080f1e">
+  <meta name="description" content="Site oficial do 1º Campeonato Babigol SLZ de FIFA 26 Pro Clubs. Acompanhe as inscrições, o sorteio dos grupos, os resultados e o mata-mata.">
+  <title>1º Campeonato Babigol SLZ</title>
+  <link rel="icon" href="assets/escudo.jpg" type="image/jpeg">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <button type="button" class="brand" data-view="inicio">
+        <img src="assets/escudo.jpg" width="48" height="48" alt="">
+        <span><strong>BABIGOL SLZ</strong><small>CAMPEONATO • 2026</small><span class="sr-only">, início</span></span>
+      </button>
+      <nav id="nav" aria-label="Seções do campeonato">
+        <button type="button" data-view="inicio" aria-controls="inicio" aria-current="page">Início</button>
+        <button type="button" data-view="inscricoes" aria-controls="inscricoes">Inscrições</button>
+        <button type="button" data-view="sorteio" aria-controls="sorteio">Sorteio</button>
+        <button type="button" data-view="grupos" aria-controls="grupos">Grupos</button>
+        <button type="button" data-view="resultados" aria-controls="resultados">Placares</button>
+        <button type="button" data-view="chaveamento" aria-controls="chaveamento">Chaveamento</button>
+        <button type="button" data-view="custos" aria-controls="custos">Orçamento</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell" id="conteudo" tabindex="-1">
+    <noscript><p class="notice">Ative o JavaScript para cadastrar participantes e gerenciar os jogos.</p></noscript>
+    <p id="feedback" class="feedback" role="status"></p>
+
+    <section id="inicio" class="view" aria-labelledby="inicio-titulo">
+      <div class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="signal" aria-hidden="true"></span> Primeira edição <span class="sep">/</span> 2026</p>
+          <h1 id="inicio-titulo" tabindex="-1">1º Campeonato <strong>Babigol SLZ</strong></h1>
+          <div class="platforms">
+            <strong>FIFA 26 Pro Clubs</strong>
+            <span>PC</span><span>Xbox</span><span>PS5</span>
+          </div>
+          <p class="hero-intro">Do sorteio à grande final. Acompanhe os 12 participantes, os placares e a disputa pelo troféu oficial.</p>
+          <div class="event-line">
+            <span class="event-day" aria-hidden="true">21 <small>NOV</small></span>
+            <div><strong><time datetime="2026-11-21">21 de novembro de 2026</time></strong><small>Das 11h às 16h</small></div>
+          </div>
+          <div class="actions hero-actions">
+            <button type="button" class="button primary" data-view="inscricoes">Cadastrar nicks <span aria-hidden="true">↗</span></button>
+            <button type="button" class="button secondary" data-view="grupos">Ver classificação</button>
+          </div>
+        </div>
+        <figure class="prize">
+          <img src="assets/trofeu.jpg" width="1122" height="1402" alt="Troféu oficial Babigol SLZ com a placa de primeiro lugar">
+          <figcaption><span>Premiação oficial</span><strong>Troféu do 1º lugar</strong></figcaption>
+        </figure>
+      </div>
+
+      <div class="metrics" id="stats" role="group" aria-label="Números do campeonato"></div>
+
+      <div class="section-heading">
+        <p class="eyebrow">Central do torneio</p>
+        <h2>Acesso rápido</h2>
+      </div>
+      <div class="quick-grid">
+        <button type="button" class="quick-card" data-view="sorteio">
+          <span class="quick-index">01 <span aria-hidden="true">/</span> Grupos</span>
+          <strong>Sorteio oficial</strong><span>Distribua os participantes nos grupos A, B e C.</span><span class="quick-arrow" aria-hidden="true">↗</span>
+        </button>
+        <button type="button" class="quick-card" data-view="resultados">
+          <span class="quick-index">02 <span aria-hidden="true">/</span> Resultados</span>
+          <strong>Central de placares</strong><span>Registre os gols e atualize a classificação.</span><span class="quick-arrow" aria-hidden="true">↗</span>
+        </button>
+        <button type="button" class="quick-card" data-view="chaveamento">
+          <span class="quick-index">03 <span aria-hidden="true">/</span> Mata-mata</span>
+          <strong>Chaveamento</strong><span>Acompanhe as quartas, as semifinais e a final.</span><span class="quick-arrow" aria-hidden="true">↗</span>
+        </button>
+      </div>
+      <div class="info-grid">
+        <article class="card">
+          <p class="eyebrow">Regulamento</p>
+          <h2>Formato da competição</h2>
+          <p>Três grupos de quatro em turno único. Avançam os dois primeiros de cada grupo e os dois melhores terceiros.</p>
+          <p>Os oito classificados disputam quartas, semifinais e final.</p>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Encontro</p>
+          <h2>Churrasco e chopp</h2>
+          <p>Churrasco e 50 litros de chopp. Confirme a presença até <time datetime="2026-11-10">10 de novembro</time>.</p>
+          <button type="button" class="text-button" data-view="custos">Ver orçamento <span aria-hidden="true">↗</span></button>
+        </article>
+      </div>
+    </section>
+
+    <section id="inscricoes" class="view" aria-labelledby="inscricoes-titulo" hidden>
+      <header class="section-heading">
+        <p class="eyebrow">Cadastro</p>
+        <h1 id="inscricoes-titulo" tabindex="-1">Inscrições</h1>
+        <p>Edite os nomes e nicks dos 12 participantes. O nick, quando preenchido, aparece nas tabelas e nos jogos.</p>
+      </header>
+      <form id="registration-form">
+        <div class="players-grid" id="players"></div>
+        <div class="form-footer"><button class="button primary" type="submit">Salvar inscrições</button></div>
+      </form>
+    </section>
+
+    <section id="sorteio" class="view" aria-labelledby="sorteio-titulo" hidden>
+      <header class="section-heading">
+        <p class="eyebrow">Fase de grupos</p>
+        <h1 id="sorteio-titulo" tabindex="-1">Sorteio oficial</h1>
+        <p>Os 12 participantes são distribuídos aleatoriamente em três grupos de quatro, sem repetições.</p>
+      </header>
+      <div class="card draw-card">
+        <div class="draw-groups" role="group" aria-label="Grupos A, B e C com quatro vagas cada">
+          <div><strong>A</strong><span>4 vagas</span></div>
+          <div><strong>B</strong><span>4 vagas</span></div>
+          <div><strong>C</strong><span>4 vagas</span></div>
+        </div>
+        <p class="notice">Um novo sorteio apaga os placares e redefine o chaveamento.</p>
+        <div class="actions">
+          <button class="button primary" type="button" id="draw-groups">Sortear grupos</button>
+          <button class="button secondary" type="button" data-view="grupos">Ver classificação</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="grupos" class="view" aria-labelledby="grupos-titulo" hidden>
+      <header class="section-heading">
+        <p class="eyebrow">Fase de grupos</p>
+        <h1 id="grupos-titulo" tabindex="-1">Classificação</h1>
+        <p>Dois times avançam por grupo, além dos dois melhores terceiros. Os classificados são confirmados após os 18 jogos.</p>
+      </header>
+      <div class="groups-grid" id="groupcards"></div>
+      <p id="standings-legend" class="legend" hidden>J = jogos · Pts = pontos · SG = saldo de gols</p>
+    </section>
+
+    <section id="resultados" class="view" aria-labelledby="resultados-titulo" hidden>
+      <header class="section-heading">
+        <p class="eyebrow">Fase de grupos</p>
+        <h1 id="resultados-titulo" tabindex="-1">Placares</h1>
+        <p>Preencha os gols de ambos os times ou deixe o jogo em branco. A classificação é atualizada ao salvar.</p>
+      </header>
+      <form id="scores-form">
+        <div class="score-grid" id="games"></div>
+        <div id="score-actions" class="form-footer" hidden><button class="button primary" type="submit">Salvar resultados</button></div>
+      </form>
+    </section>
+
+    <section id="chaveamento" class="view" aria-labelledby="chaveamento-titulo" hidden>
+      <header class="section-heading">
+        <p class="eyebrow">Mata-mata</p>
+        <h1 id="chaveamento-titulo" tabindex="-1">Chaveamento</h1>
+        <p>Oito classificados, sete partidas e um campeão.</p>
+      </header>
+      <form id="knockout-form">
+        <div id="bracket"></div>
+        <div id="knockout-actions" class="form-footer knockout-footer" hidden>
+          <p>Se houver empate, indique quem avançou ou venceu após o desempate.</p>
+          <button class="button primary" type="submit">Salvar mata-mata</button>
+        </div>
+      </form>
+      <details class="card rules">
+        <summary>Como são definidos os cruzamentos?</summary>
+        <p>1º A × melhor 3º, 1º B × segundo melhor 3º, 1º C × 2º A e 2º B × 2º C. Quando necessário, os dois terceiros são trocados para evitar um confronto do mesmo grupo nas quartas.</p>
+      </details>
+    </section>
+
+    <section id="custos" class="view" aria-labelledby="custos-titulo" hidden>
+      <header class="section-heading">
+        <p class="eyebrow">Organização do evento</p>
+        <h1 id="custos-titulo" tabindex="-1">Orçamento</h1>
+        <p>Estimativa de churrasco e chopp para 12 pessoas. Confira os preços com os fornecedores. O total não inclui troféu ou premiação extra.</p>
+      </header>
+      <div id="budget"></div>
+    </section>
+  </main>
+
+  <footer class="shell site-footer">
+    <div class="card data-card">
+      <div>
+        <p class="eyebrow">Dados do campeonato</p>
+        <h2>Backup local</h2>
+        <p>Os dados ficam neste navegador. Use o arquivo JSON para fazer backup ou transferir o campeonato para outro dispositivo.</p>
+      </div>
+      <div class="actions">
+        <button class="button secondary" type="button" id="export-data">Exportar JSON</button>
+        <button class="button secondary" type="button" id="import-data">Importar JSON</button>
+        <input id="import" type="file" accept=".json,application/json" hidden>
+        <button class="button danger" type="button" id="reset-data">Reiniciar campeonato</button>
+      </div>
+    </div>
+    <div class="footer-end"><strong>BABIGOL SLZ</strong><span>Primeira edição • 2026</span></div>
+  </footer>
+</body>
+</html>

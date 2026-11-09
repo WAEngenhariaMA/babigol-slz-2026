@@ -31,6 +31,5 @@ Site oficial do campeonato. Repositório de código-fonte público.
 ## Limitações conhecidas
 
 - Dados ficam apenas no localStorage do navegador; não são compartilhados em tempo real entre dispositivos.
-- A identidade visual publicada ainda usa emblema e troféu ilustrativos. Os arquivos originais do escudo e troféu precisam ser adicionados e incorporados ao layout.
 - O desempate e a ordenação dos terceiros colocados merecem testes de regras adicionais antes da competição.
 - Não coloque senhas, tokens, credenciais ou informações pessoais privadas neste repositório público.
