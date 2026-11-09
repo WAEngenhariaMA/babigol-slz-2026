@@ -21,12 +21,15 @@ Site oficial do campeonato. Repositório de código-fonte público.
 
 ## Funcionalidades atuais
 
+- Identidade visual do escudo: fundo branco, azul-marinho e dourado (fontes Barlow, Barlow Condensed e Chakra Petch)
+- Página inicial com contagem regressiva, troféu animado e etapas do campeonato
 - 12 participantes e cadastro de nomes/nicks
-- Sorteio aleatório para três grupos de quatro
-- Placar de 18 jogos e classificação automática
+- Sorteio animado: um controle digita um código de 8 botões (ex.: `BG26-69528D`) que serve de semente do embaralhamento, e os nicks são revelados um a um nos grupos A, B e C. O código fica salvo e aparece na classificação
+- Placar de 18 jogos, classificação automática e corrida dos terceiros colocados
 - Oito classificados: dois primeiros de cada grupo e dois melhores terceiros
-- Quartas de final, semifinais e final
+- Chaveamento espelhado (2 quartas e 1 semi de cada lado) com a final e o troféu no centro; o placar de cada partida é lançado numa janela, com desempate em caso de empate
 - Estimativa de custos do churrasco e chopp
+- Imagens em WebP com fundo transparente (`assets/*.webp`); os JPG originais ficam para o `og:image`
 
 ## Limitações conhecidas
 
