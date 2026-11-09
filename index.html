@@ -3,196 +3,420 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#080f1e">
-  <meta name="description" content="Site oficial do 1º Campeonato Babigol SLZ de FIFA 26 Pro Clubs. Acompanhe as inscrições, o sorteio dos grupos, os resultados e o mata-mata.">
-  <title>1º Campeonato Babigol SLZ</title>
-  <link rel="icon" href="assets/escudo.jpg" type="image/jpeg">
+  <meta name="theme-color" content="#0a1a3f">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Site oficial do 1º Campeonato Babigol SLZ de FIFA 26 Pro Clubs. Sorteio ao vivo, grupos, placares e o chaveamento até a grande final.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="1º Campeonato Babigol SLZ · FIFA 26 Pro Clubs">
+  <meta property="og:description" content="Sorteio, grupos, placares e chaveamento até a grande final. 21 de novembro de 2026.">
+  <meta property="og:image" content="https://babigol-slz-2026.vercel.app/assets/trofeu.jpg">
+  <title>1º Campeonato Babigol SLZ · FIFA 26 Pro Clubs</title>
+  <link rel="icon" href="assets/escudo-sm.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/escudo-sm.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap">
+  <link rel="preload" as="image" href="assets/trofeu.webp" type="image/webp">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
 <body>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-pad" viewBox="0 0 24 24"><path d="M7 7h10a5 5 0 0 1 4.9 6l-.8 4a2.5 2.5 0 0 1-4.3 1.2L14.5 16h-5l-2.3 2.2A2.5 2.5 0 0 1 2.9 17l-.8-4A5 5 0 0 1 7 7z"/><path d="M7 10v4M5 12h4"/><circle cx="16" cy="11" r=".9" fill="currentColor"/><circle cx="18" cy="13" r=".9" fill="currentColor"/></symbol>
+    <symbol id="i-pc" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+    <symbol id="i-ps" viewBox="0 0 24 24"><path d="M12 2.8l2.9 4.9H9.1z"/><circle cx="18.2" cy="12" r="2.6"/><path d="M9.9 16.9l4.2 4.2m0-4.2-4.2 4.2"/><rect x="3.3" y="9.4" width="5.2" height="5.2"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 13v4M9 17h6v4H9z"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></symbol>
+    <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 9v11"/></symbol>
+    <symbol id="i-bracket" viewBox="0 0 24 24"><path d="M2 5h5v5H2M2 14h5v5H2M7 7.5h3v9H7M10 12h4M14 9.5h3M22 5h-5v14h5"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></symbol>
+    <symbol id="i-ball" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5l3.8 2.8-1.4 4.4H9.6l-1.4-4.4z"/><path d="M12 3v4.5M15.8 10.3l4.5-1.6M14.4 14.7l2.6 4M9.6 14.7 7 18.7M8.2 10.3 3.7 8.7"/></symbol>
+    <symbol id="i-beer" viewBox="0 0 24 24"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2M5 8a3 3 0 0 1 3-3 3 3 0 0 1 5 0 2.5 2.5 0 0 1 2 3"/><path d="M9 12v5M12 12v5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></symbol>
+    <symbol id="i-skip" viewBox="0 0 24 24"><path d="M5 5l10 7-10 7zM19 5v14"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.5"/><path d="M4 4v4.5h4.5"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol>
+  </svg>
+
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>1º Campeonato Babigol SLZ</span><span>FIFA 26 · Pro Clubs</span><span>21.11.2026 · 11h às 16h</span><span>PC · Xbox · PS5</span><span>12 jogadores · 3 grupos · 1 taça</span><span>Sorteio oficial ao vivo</span>
+      <span>1º Campeonato Babigol SLZ</span><span>FIFA 26 · Pro Clubs</span><span>21.11.2026 · 11h às 16h</span><span>PC · Xbox · PS5</span><span>12 jogadores · 3 grupos · 1 taça</span><span>Sorteio oficial ao vivo</span>
+    </div>
+  </div>
+
   <header class="site-header">
     <div class="shell header-inner">
-      <button type="button" class="brand" data-view="inicio">
-        <img src="assets/escudo.jpg" width="48" height="48" alt="">
-        <span><strong>BABIGOL SLZ</strong><small>CAMPEONATO • 2026</small><span class="sr-only">, início</span></span>
+      <a class="brand" href="#inicio" data-view="inicio">
+        <img src="assets/escudo-sm.webp" width="160" height="170" alt="">
+        <span class="brand-text"><strong>Babigol <em>SLZ</em></strong><small>FIFA 26 · Pro Clubs</small></span>
+        <span class="sr-only">, início</span>
+      </a>
+      <button type="button" class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="nav">
+        <svg class="icon"><use href="#i-menu"/></svg><span class="sr-only">Abrir menu</span>
       </button>
       <nav id="nav" aria-label="Seções do campeonato">
-        <button type="button" data-view="inicio" aria-controls="inicio" aria-current="page">Início</button>
-        <button type="button" data-view="inscricoes" aria-controls="inscricoes">Inscrições</button>
-        <button type="button" data-view="sorteio" aria-controls="sorteio">Sorteio</button>
-        <button type="button" data-view="grupos" aria-controls="grupos">Grupos</button>
-        <button type="button" data-view="resultados" aria-controls="resultados">Placares</button>
-        <button type="button" data-view="chaveamento" aria-controls="chaveamento">Chaveamento</button>
-        <button type="button" data-view="custos" aria-controls="custos">Orçamento</button>
+        <a href="#inicio" data-view="inicio" aria-current="page">Início</a>
+        <a href="#inscricoes" data-view="inscricoes">Inscrições</a>
+        <a href="#sorteio" data-view="sorteio">Sorteio</a>
+        <a href="#grupos" data-view="grupos">Grupos</a>
+        <a href="#resultados" data-view="resultados">Placares</a>
+        <a href="#chaveamento" data-view="chaveamento">Chaveamento</a>
+        <a href="#custos" data-view="custos">Orçamento</a>
       </nav>
     </div>
   </header>
 
-  <main class="shell" id="conteudo" tabindex="-1">
-    <noscript><p class="notice">Ative o JavaScript para cadastrar participantes e gerenciar os jogos.</p></noscript>
-    <p id="feedback" class="feedback" role="status"></p>
+  <main id="conteudo" tabindex="-1">
+    <noscript><p class="shell notice">Ative o JavaScript para cadastrar participantes e gerenciar os jogos.</p></noscript>
 
+    <!-- INÍCIO -->
     <section id="inicio" class="view" aria-labelledby="inicio-titulo">
       <div class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow"><span class="signal" aria-hidden="true"></span> Primeira edição <span class="sep">/</span> 2026</p>
-          <h1 id="inicio-titulo" tabindex="-1">1º Campeonato <strong>Babigol SLZ</strong></h1>
-          <div class="platforms">
-            <strong>FIFA 26 Pro Clubs</strong>
-            <span>PC</span><span>Xbox</span><span>PS5</span>
-          </div>
-          <p class="hero-intro">Do sorteio à grande final. Acompanhe os 12 participantes, os placares e a disputa pelo troféu oficial.</p>
-          <div class="event-line">
-            <span class="event-day" aria-hidden="true">21 <small>NOV</small></span>
-            <div><strong><time datetime="2026-11-21">21 de novembro de 2026</time></strong><small>Das 11h às 16h</small></div>
-          </div>
-          <div class="actions hero-actions">
-            <button type="button" class="button primary" data-view="inscricoes">Cadastrar nicks <span aria-hidden="true">↗</span></button>
-            <button type="button" class="button secondary" data-view="grupos">Ver classificação</button>
-          </div>
+        <div class="hero-bg" aria-hidden="true">
+          <svg class="pitch" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice"><rect x="40" y="40" width="1120" height="520" rx="6"/><path d="M600 40v520"/><circle cx="600" cy="300" r="90"/><circle cx="600" cy="300" r="4"/><rect x="40" y="170" width="140" height="260"/><rect x="1020" y="170" width="140" height="260"/><rect x="40" y="235" width="50" height="130"/><rect x="1110" y="235" width="50" height="130"/></svg>
+          <span class="float-sym s1"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/></svg></span>
+          <span class="float-sym s2"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg></span>
+          <span class="float-sym s3"><svg viewBox="0 0 24 24"><path d="M4 4l16 16M20 4 4 20"/></svg></span>
+          <span class="float-sym s4"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/></svg></span>
+          <span class="float-sym s5 letter">A</span>
+          <span class="float-sym s6 letter">Y</span>
         </div>
-        <figure class="prize">
-          <img src="assets/trofeu.jpg" width="1122" height="1402" alt="Troféu oficial Babigol SLZ com a placa de primeiro lugar">
-          <figcaption><span>Premiação oficial</span><strong>Troféu do 1º lugar</strong></figcaption>
-        </figure>
+        <div class="shell hero-inner">
+          <div class="hero-copy">
+            <p class="kicker"><span class="live-dot" aria-hidden="true"></span> Primeira edição · Temporada 2026</p>
+            <h1 id="inicio-titulo" tabindex="-1">
+              <span class="h1-small">1º Campeonato</span>
+              <span class="h1-big">Babigol <span class="gold-text">SLZ</span></span>
+            </h1>
+            <p class="game-tag"><span class="game-tag-mark">FIFA 26</span><span>Pro Clubs</span></p>
+            <ul class="platforms" aria-label="Plataformas">
+              <li><svg class="icon"><use href="#i-pc"/></svg>PC</li>
+              <li><svg class="icon"><use href="#i-pad"/></svg>Xbox</li>
+              <li><svg class="icon"><use href="#i-ps"/></svg>PS5</li>
+            </ul>
+            <p class="hero-intro">Do sorteio ao vivo à grande final. Doze jogadores, três grupos e uma única taça em disputa.</p>
+            <div class="countdown-wrap">
+              <div class="event-date">
+                <svg class="icon"><use href="#i-calendar"/></svg>
+                <div><strong><time datetime="2026-11-21T11:00-03:00">21 de novembro de 2026</time></strong><small>Das 11h às 16h · São Luís</small></div>
+              </div>
+              <div class="countdown" id="countdown" role="timer" aria-live="off" aria-label="Contagem regressiva para o campeonato">
+                <div><strong data-unit="d">00</strong><span>dias</span></div>
+                <div><strong data-unit="h">00</strong><span>horas</span></div>
+                <div><strong data-unit="m">00</strong><span>min</span></div>
+                <div><strong data-unit="s">00</strong><span>seg</span></div>
+              </div>
+            </div>
+            <div class="actions">
+              <a class="button primary" href="#sorteio" data-view="sorteio"><svg class="icon"><use href="#i-play"/></svg>Assistir ao sorteio</a>
+              <a class="button ghost" href="#chaveamento" data-view="chaveamento">Ver chaveamento <svg class="icon"><use href="#i-arrow"/></svg></a>
+            </div>
+          </div>
+          <figure class="hero-trophy">
+            <div class="rays" aria-hidden="true"></div>
+            <div class="trophy-glow" aria-hidden="true"></div>
+            <img src="assets/trofeu.webp" width="760" height="1180" alt="Troféu oficial Babigol SLZ com a placa de primeiro lugar do Torneio FIFA 26 Pro Clubs" fetchpriority="high">
+            <figcaption><span>Premiação oficial</span><strong>Taça do campeão</strong></figcaption>
+          </figure>
+        </div>
       </div>
 
-      <div class="metrics" id="stats" role="group" aria-label="Números do campeonato"></div>
+      <div class="shell">
+        <div class="metrics" id="stats" role="group" aria-label="Números do campeonato"></div>
 
-      <div class="section-heading">
-        <p class="eyebrow">Central do torneio</p>
-        <h2>Acesso rápido</h2>
-      </div>
-      <div class="quick-grid">
-        <button type="button" class="quick-card" data-view="sorteio">
-          <span class="quick-index">01 <span aria-hidden="true">/</span> Grupos</span>
-          <strong>Sorteio oficial</strong><span>Distribua os participantes nos grupos A, B e C.</span><span class="quick-arrow" aria-hidden="true">↗</span>
-        </button>
-        <button type="button" class="quick-card" data-view="resultados">
-          <span class="quick-index">02 <span aria-hidden="true">/</span> Resultados</span>
-          <strong>Central de placares</strong><span>Registre os gols e atualize a classificação.</span><span class="quick-arrow" aria-hidden="true">↗</span>
-        </button>
-        <button type="button" class="quick-card" data-view="chaveamento">
-          <span class="quick-index">03 <span aria-hidden="true">/</span> Mata-mata</span>
-          <strong>Chaveamento</strong><span>Acompanhe as quartas, as semifinais e a final.</span><span class="quick-arrow" aria-hidden="true">↗</span>
-        </button>
-      </div>
-      <div class="info-grid">
-        <article class="card">
-          <p class="eyebrow">Regulamento</p>
-          <h2>Formato da competição</h2>
-          <p>Três grupos de quatro em turno único. Avançam os dois primeiros de cada grupo e os dois melhores terceiros.</p>
-          <p>Os oito classificados disputam quartas, semifinais e final.</p>
-        </article>
-        <article class="card">
-          <p class="eyebrow">Encontro</p>
-          <h2>Churrasco e chopp</h2>
-          <p>Churrasco e 50 litros de chopp. Confirme a presença até <time datetime="2026-11-10">10 de novembro</time>.</p>
-          <button type="button" class="text-button" data-view="custos">Ver orçamento <span aria-hidden="true">↗</span></button>
-        </article>
+        <div class="section-title">
+          <p class="eyebrow">Rumo à taça</p>
+          <h2>Caminho do campeão</h2>
+        </div>
+        <ol class="journey" id="journey"></ol>
+
+        <div class="section-title">
+          <p class="eyebrow">Central do torneio</p>
+          <h2>Acesso rápido</h2>
+        </div>
+        <div class="quick-grid">
+          <a class="quick-card" href="#sorteio" data-view="sorteio">
+            <span class="quick-icon"><svg class="icon"><use href="#i-shuffle"/></svg></span>
+            <span class="quick-index">01 · Grupos</span>
+            <strong>Sorteio oficial</strong>
+            <span>O controle digita o código e revela os grupos A, B e C ao vivo.</span>
+            <svg class="icon quick-arrow" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+          <a class="quick-card" href="#resultados" data-view="resultados">
+            <span class="quick-icon"><svg class="icon"><use href="#i-ball"/></svg></span>
+            <span class="quick-index">02 · Resultados</span>
+            <strong>Central de placares</strong>
+            <span>Registre os gols das 18 partidas e atualize a classificação.</span>
+            <svg class="icon quick-arrow" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+          <a class="quick-card" href="#chaveamento" data-view="chaveamento">
+            <span class="quick-icon"><svg class="icon"><use href="#i-bracket"/></svg></span>
+            <span class="quick-index">03 · Mata-mata</span>
+            <strong>Chaveamento</strong>
+            <span>Quartas, semifinais e a grande final, com a taça no centro.</span>
+            <svg class="icon quick-arrow" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+        </div>
+
+        <div class="press-start">
+          <div class="ps-symbols" aria-hidden="true">
+            <span class="sym tri"></span><span class="sym cir"></span><span class="sym crs"></span><span class="sym sqr"></span>
+          </div>
+          <div class="ps-copy">
+            <p class="blink">Press start</p>
+            <h2>Crossplay liberado: PC, Xbox e PS5 no mesmo gramado</h2>
+            <p>Partidas de FIFA 26 Pro Clubs, com regulamento único para todas as plataformas.</p>
+          </div>
+          <a class="button gold" href="#inscricoes" data-view="inscricoes"><svg class="icon"><use href="#i-users"/></svg>Cadastrar nicks</a>
+        </div>
+
+        <div class="info-grid">
+          <article class="card info-card">
+            <span class="info-icon"><svg class="icon"><use href="#i-table"/></svg></span>
+            <p class="eyebrow">Regulamento</p>
+            <h2>Formato da competição</h2>
+            <ul class="check-list">
+              <li>Três grupos de quatro jogadores em turno único.</li>
+              <li>Avançam os dois primeiros de cada grupo e os dois melhores terceiros.</li>
+              <li>Os oito classificados disputam quartas, semifinais e a final.</li>
+              <li>Critérios: pontos, saldo de gols e gols marcados.</li>
+            </ul>
+          </article>
+          <article class="card info-card">
+            <span class="info-icon"><svg class="icon"><use href="#i-beer"/></svg></span>
+            <p class="eyebrow">Resenha</p>
+            <h2>Churrasco e chopp</h2>
+            <p>Churrasco completo e 50 litros de chopp para acompanhar os jogos. Confirme a presença até <time datetime="2026-11-10">10 de novembro</time>.</p>
+            <a class="text-link" href="#custos" data-view="custos">Ver orçamento <svg class="icon"><use href="#i-arrow"/></svg></a>
+          </article>
+        </div>
       </div>
     </section>
 
+    <!-- INSCRIÇÕES -->
     <section id="inscricoes" class="view" aria-labelledby="inscricoes-titulo" hidden>
-      <header class="section-heading">
-        <p class="eyebrow">Cadastro</p>
-        <h1 id="inscricoes-titulo" tabindex="-1">Inscrições</h1>
-        <p>Edite os nomes e nicks dos 12 participantes. O nick, quando preenchido, aparece nas tabelas e nos jogos.</p>
-      </header>
-      <form id="registration-form">
-        <div class="players-grid" id="players"></div>
-        <div class="form-footer"><button class="button primary" type="submit">Salvar inscrições</button></div>
-      </form>
-    </section>
-
-    <section id="sorteio" class="view" aria-labelledby="sorteio-titulo" hidden>
-      <header class="section-heading">
-        <p class="eyebrow">Fase de grupos</p>
-        <h1 id="sorteio-titulo" tabindex="-1">Sorteio oficial</h1>
-        <p>Os 12 participantes são distribuídos aleatoriamente em três grupos de quatro, sem repetições.</p>
-      </header>
-      <div class="card draw-card">
-        <div class="draw-groups" role="group" aria-label="Grupos A, B e C com quatro vagas cada">
-          <div><strong>A</strong><span>4 vagas</span></div>
-          <div><strong>B</strong><span>4 vagas</span></div>
-          <div><strong>C</strong><span>4 vagas</span></div>
+      <header class="page-head">
+        <div class="shell">
+          <p class="eyebrow">Cadastro</p>
+          <h1 id="inscricoes-titulo" tabindex="-1">Inscrições</h1>
+          <p>Edite os nomes e nicks dos 12 participantes. O nick, quando preenchido, aparece no sorteio, nas tabelas e no chaveamento.</p>
         </div>
-        <p class="notice">Um novo sorteio apaga os placares e redefine o chaveamento.</p>
-        <div class="actions">
-          <button class="button primary" type="button" id="draw-groups">Sortear grupos</button>
-          <button class="button secondary" type="button" data-view="grupos">Ver classificação</button>
-        </div>
+      </header>
+      <div class="shell page-body">
+        <form id="registration-form">
+          <div class="players-grid" id="players"></div>
+          <div class="form-footer"><button class="button primary" type="submit"><svg class="icon"><use href="#i-check"/></svg>Salvar inscrições</button></div>
+        </form>
       </div>
     </section>
 
-    <section id="grupos" class="view" aria-labelledby="grupos-titulo" hidden>
-      <header class="section-heading">
-        <p class="eyebrow">Fase de grupos</p>
-        <h1 id="grupos-titulo" tabindex="-1">Classificação</h1>
-        <p>Dois times avançam por grupo, além dos dois melhores terceiros. Os classificados são confirmados após os 18 jogos.</p>
-      </header>
-      <div class="groups-grid" id="groupcards"></div>
-      <p id="standings-legend" class="legend" hidden>J = jogos · Pts = pontos · SG = saldo de gols</p>
-    </section>
-
-    <section id="resultados" class="view" aria-labelledby="resultados-titulo" hidden>
-      <header class="section-heading">
-        <p class="eyebrow">Fase de grupos</p>
-        <h1 id="resultados-titulo" tabindex="-1">Placares</h1>
-        <p>Preencha os gols de ambos os times ou deixe o jogo em branco. A classificação é atualizada ao salvar.</p>
-      </header>
-      <form id="scores-form">
-        <div class="score-grid" id="games"></div>
-        <div id="score-actions" class="form-footer" hidden><button class="button primary" type="submit">Salvar resultados</button></div>
-      </form>
-    </section>
-
-    <section id="chaveamento" class="view" aria-labelledby="chaveamento-titulo" hidden>
-      <header class="section-heading">
-        <p class="eyebrow">Mata-mata</p>
-        <h1 id="chaveamento-titulo" tabindex="-1">Chaveamento</h1>
-        <p>Oito classificados, sete partidas e um campeão.</p>
-      </header>
-      <form id="knockout-form">
-        <div id="bracket"></div>
-        <div id="knockout-actions" class="form-footer knockout-footer" hidden>
-          <p>Se houver empate, indique quem avançou ou venceu após o desempate.</p>
-          <button class="button primary" type="submit">Salvar mata-mata</button>
+    <!-- SORTEIO -->
+    <section id="sorteio" class="view" aria-labelledby="sorteio-titulo" hidden>
+      <header class="page-head">
+        <div class="shell">
+          <p class="eyebrow">Fase de grupos</p>
+          <h1 id="sorteio-titulo" tabindex="-1">Sorteio oficial</h1>
+          <p>O controle digita um código único de 8 botões. Esse código gera a ordem do sorteio e os 12 jogadores são revelados, um a um, nos grupos A, B e C.</p>
         </div>
-      </form>
-      <details class="card rules">
-        <summary>Como são definidos os cruzamentos?</summary>
-        <p>1º A × melhor 3º, 1º B × segundo melhor 3º, 1º C × 2º A e 2º B × 2º C. Quando necessário, os dois terceiros são trocados para evitar um confronto do mesmo grupo nas quartas.</p>
-      </details>
+      </header>
+      <div class="shell page-body">
+        <div class="draw-stage" id="draw-stage" data-state="idle">
+          <div class="draw-console">
+            <div class="draw-screen">
+              <div class="screen-top"><span class="screen-label">Código do sorteio</span><span class="screen-status" id="draw-status">Aguardando</span></div>
+              <ol class="code-slots" id="code-slots" aria-label="Sequência de botões do código"></ol>
+              <p class="code-text" id="code-text">BG26-······</p>
+            </div>
+
+            <svg class="pad" id="pad" viewBox="0 0 400 250" role="img" aria-label="Controle digitando o código do sorteio">
+              <defs>
+                <linearGradient id="padBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe6f3"/></linearGradient>
+                <linearGradient id="padNavy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#17397a"/><stop offset="1" stop-color="#0a1a3f"/></linearGradient>
+                <linearGradient id="padGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7dc83"/><stop offset=".5" stop-color="#d9a630"/><stop offset="1" stop-color="#a8771a"/></linearGradient>
+              </defs>
+              <rect class="shoulder" data-btn="l1" x="66" y="28" width="74" height="18" rx="9"/>
+              <rect class="shoulder" data-btn="r1" x="260" y="28" width="74" height="18" rx="9"/>
+              <path class="pad-body" d="M110 38H290C320 38 345 46 356 70C372 105 392 170 386 205C381 232 352 240 334 222C318 206 306 186 290 172H110C94 186 82 206 66 222C48 240 19 232 14 205C8 170 28 105 44 70C55 46 80 38 110 38Z"/>
+              <path class="pad-core" d="M140 104H260L250 172H150Z"/>
+              <rect class="touchpad" x="146" y="44" width="108" height="60" rx="12"/>
+              <path class="lightbar" d="M150 47h100"/>
+              <text class="pad-brand" x="200" y="80" text-anchor="middle">BABIGOL</text>
+              <g class="dpad">
+                <rect data-btn="up" x="80" y="68" width="16" height="22" rx="4"/>
+                <rect data-btn="down" x="80" y="110" width="16" height="22" rx="4"/>
+                <rect data-btn="left" x="56" y="92" width="22" height="16" rx="4"/>
+                <rect data-btn="right" x="98" y="92" width="22" height="16" rx="4"/>
+              </g>
+              <g class="face">
+                <g data-btn="triangle"><circle cx="312" cy="74" r="13"/><path d="M312 67l6.5 11h-13z"/></g>
+                <g data-btn="circle"><circle cx="338" cy="100" r="13"/><circle class="glyph" cx="338" cy="100" r="6"/></g>
+                <g data-btn="cross"><circle cx="312" cy="126" r="13"/><path d="M307 121l10 10m0-10-10 10"/></g>
+                <g data-btn="square"><circle cx="286" cy="100" r="13"/><rect class="glyph" x="281" y="95" width="10" height="10"/></g>
+              </g>
+              <g class="sticks"><circle cx="152" cy="140" r="21"/><circle class="stick-top" cx="152" cy="140" r="13"/><circle cx="248" cy="140" r="21"/><circle class="stick-top" cx="248" cy="140" r="13"/></g>
+              <circle class="home-btn" cx="200" cy="150" r="7"/>
+            </svg>
+
+            <div class="reel" id="reel" aria-live="polite">
+              <span class="reel-label" id="reel-label">Pronto para sortear</span>
+              <strong class="reel-name" id="reel-name">Press start</strong>
+              <span class="reel-sub" id="reel-sub">12 jogadores · 3 grupos · 4 vagas por grupo</span>
+            </div>
+
+            <div class="draw-actions">
+              <button class="button gold" type="button" id="draw-groups"><svg class="icon"><use href="#i-play"/></svg><span>Iniciar sorteio</span></button>
+              <button class="button ghost-light" type="button" id="draw-skip" hidden><svg class="icon"><use href="#i-skip"/></svg>Pular animação</button>
+              <button class="icon-button" type="button" id="sound-toggle" aria-pressed="true"><svg class="icon"><use href="#i-sound"/></svg><span class="sr-only">Som do sorteio</span></button>
+            </div>
+          </div>
+
+          <div class="draw-board" id="draw-board" aria-label="Grupos sorteados"></div>
+        </div>
+        <div class="draw-after" id="draw-after" hidden>
+          <a class="button primary" href="#grupos" data-view="grupos"><svg class="icon"><use href="#i-table"/></svg>Ver classificação</a>
+          <a class="button ghost" href="#resultados" data-view="resultados">Lançar placares <svg class="icon"><use href="#i-arrow"/></svg></a>
+        </div>
+        <p class="notice">Refazer o sorteio apaga os placares da fase de grupos e do mata-mata.</p>
+      </div>
     </section>
 
-    <section id="custos" class="view" aria-labelledby="custos-titulo" hidden>
-      <header class="section-heading">
-        <p class="eyebrow">Organização do evento</p>
-        <h1 id="custos-titulo" tabindex="-1">Orçamento</h1>
-        <p>Estimativa de churrasco e chopp para 12 pessoas. Confira os preços com os fornecedores. O total não inclui troféu ou premiação extra.</p>
+    <!-- GRUPOS -->
+    <section id="grupos" class="view" aria-labelledby="grupos-titulo" hidden>
+      <header class="page-head">
+        <div class="shell">
+          <p class="eyebrow">Fase de grupos</p>
+          <h1 id="grupos-titulo" tabindex="-1">Classificação</h1>
+          <p>Dois jogadores avançam por grupo, além dos dois melhores terceiros. Os classificados são confirmados após os 18 jogos.</p>
+        </div>
       </header>
-      <div id="budget"></div>
+      <div class="shell page-body">
+        <div class="groups-grid" id="groupcards"></div>
+        <div id="thirds"></div>
+        <p id="standings-legend" class="legend" hidden></p>
+      </div>
+    </section>
+
+    <!-- PLACARES -->
+    <section id="resultados" class="view" aria-labelledby="resultados-titulo" hidden>
+      <header class="page-head">
+        <div class="shell">
+          <p class="eyebrow">Fase de grupos</p>
+          <h1 id="resultados-titulo" tabindex="-1">Placares</h1>
+          <p>Preencha os gols dos dois jogadores ou deixe o jogo em branco. A classificação é atualizada ao salvar.</p>
+        </div>
+      </header>
+      <div class="shell page-body">
+        <form id="scores-form">
+          <div class="score-grid" id="games"></div>
+          <div id="score-actions" class="form-footer sticky-footer" hidden><button class="button primary" type="submit"><svg class="icon"><use href="#i-check"/></svg>Salvar resultados</button></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- CHAVEAMENTO -->
+    <section id="chaveamento" class="view" aria-labelledby="chaveamento-titulo" hidden>
+      <header class="page-head">
+        <div class="shell">
+          <p class="eyebrow">Mata-mata</p>
+          <h1 id="chaveamento-titulo" tabindex="-1">Chaveamento</h1>
+          <p>Oito classificados, sete partidas e uma taça. Toque em uma partida para lançar o placar.</p>
+        </div>
+      </header>
+      <div class="shell page-body">
+        <div id="bracket"></div>
+        <details class="card rules">
+          <summary>Como são definidos os cruzamentos?</summary>
+          <p>1º A × melhor 3º e 1º B × segundo melhor 3º formam o lado esquerdo. 1º C × 2º A e 2º B × 2º C formam o lado direito. Quando necessário, os dois terceiros são trocados para evitar um confronto do mesmo grupo nas quartas. Em caso de empate, informe quem avançou no desempate.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- ORÇAMENTO -->
+    <section id="custos" class="view" aria-labelledby="custos-titulo" hidden>
+      <header class="page-head">
+        <div class="shell">
+          <p class="eyebrow">Organização do evento</p>
+          <h1 id="custos-titulo" tabindex="-1">Orçamento</h1>
+          <p>Estimativa de churrasco e chopp para 12 pessoas. Confira os preços com os fornecedores. O total não inclui troféu ou premiação extra.</p>
+        </div>
+      </header>
+      <div class="shell page-body"><div id="budget"></div></div>
     </section>
   </main>
 
-  <footer class="shell site-footer">
-    <div class="card data-card">
-      <div>
-        <p class="eyebrow">Dados do campeonato</p>
-        <h2>Backup local</h2>
-        <p>Os dados ficam neste navegador. Use o arquivo JSON para fazer backup ou transferir o campeonato para outro dispositivo.</p>
+  <footer class="site-footer">
+    <div class="shell footer-grid">
+      <div class="footer-brand">
+        <img src="assets/escudo-sm.webp" width="160" height="170" alt="" loading="lazy">
+        <div><strong>Babigol <em>SLZ</em></strong><span>1º Campeonato · FIFA 26 Pro Clubs</span><span>21 de novembro de 2026 · São Luís</span></div>
       </div>
-      <div class="actions">
-        <button class="button secondary" type="button" id="export-data">Exportar JSON</button>
-        <button class="button secondary" type="button" id="import-data">Importar JSON</button>
-        <input id="import" type="file" accept=".json,application/json" hidden>
-        <button class="button danger" type="button" id="reset-data">Reiniciar campeonato</button>
+      <div class="footer-data">
+        <p class="eyebrow">Dados do campeonato</p>
+        <p>Os dados ficam neste navegador. Exporte o arquivo JSON para fazer backup ou levar o campeonato para outro dispositivo.</p>
+        <div class="actions">
+          <button class="button ghost-light small" type="button" id="export-data"><svg class="icon"><use href="#i-download"/></svg>Exportar JSON</button>
+          <button class="button ghost-light small" type="button" id="import-data"><svg class="icon"><use href="#i-upload"/></svg>Importar JSON</button>
+          <input id="import" type="file" accept=".json,application/json" hidden>
+          <button class="button danger small" type="button" id="reset-data"><svg class="icon"><use href="#i-reset"/></svg>Reiniciar</button>
+        </div>
       </div>
     </div>
-    <div class="footer-end"><strong>BABIGOL SLZ</strong><span>Primeira edição • 2026</span></div>
+    <div class="shell footer-end"><span>PC · Xbox · PS5</span><span>Babigol SLZ · Primeira edição · 2026</span></div>
   </footer>
+
+  <p id="feedback" class="toast" role="status" aria-live="polite"></p>
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+  <dialog id="match-dialog" class="modal" aria-labelledby="md-title">
+    <form id="match-form" method="dialog">
+      <header class="modal-head">
+        <p class="eyebrow" id="md-round">Mata-mata</p>
+        <h2 id="md-title">Partida</h2>
+        <button type="button" class="icon-button modal-close" data-close><svg class="icon"><use href="#i-close"/></svg><span class="sr-only">Fechar</span></button>
+      </header>
+      <div class="md-scoreline">
+        <label class="md-team" for="md-a"><span class="md-avatar" id="md-avatar-a"></span><span class="md-name" id="md-name-a"></span></label>
+        <input id="md-a" type="number" min="0" max="99" inputmode="numeric" placeholder="–">
+        <span class="md-x" aria-hidden="true">×</span>
+        <input id="md-b" type="number" min="0" max="99" inputmode="numeric" placeholder="–">
+        <label class="md-team away" for="md-b"><span class="md-avatar" id="md-avatar-b"></span><span class="md-name" id="md-name-b"></span></label>
+      </div>
+      <div class="md-tie" id="md-tie" hidden>
+        <label for="md-win">Empate: quem avançou no desempate?</label>
+        <select id="md-win"></select>
+      </div>
+      <p class="md-error" id="md-error" role="alert"></p>
+      <footer class="modal-actions">
+        <button type="button" class="button ghost small" id="md-clear">Limpar placar</button>
+        <button type="submit" class="button primary small"><svg class="icon"><use href="#i-check"/></svg>Salvar placar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog" class="modal modal-sm" aria-labelledby="cd-title">
+    <form method="dialog">
+      <h2 id="cd-title"></h2>
+      <p id="cd-text"></p>
+      <footer class="modal-actions">
+        <button type="submit" value="cancel" class="button ghost small">Cancelar</button>
+        <button type="submit" value="ok" class="button primary small" id="cd-ok">Confirmar</button>
+      </footer>
+    </form>
+  </dialog>
 </body>
 </html>
