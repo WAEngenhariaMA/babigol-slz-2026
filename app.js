@@ -120,8 +120,8 @@ function qualifiers(matches) {
   return { groups, thirds };
 }
 
-function winner(match) {
-  const score = data.ko[match.key];
+function winner(match, scores) {
+  const score = scores[match.key];
   if (match.a == null || match.b == null || !hasScore(score)) return null;
   const a = Number(score.a);
   const b = Number(score.b);
@@ -130,7 +130,7 @@ function winner(match) {
   return null;
 }
 
-function knockout(qualified) {
+function knockout(qualified, scores) {
   if (!qualified) return [];
   const { groups, thirds } = qualified;
   const [a, b, c] = groups;
@@ -141,10 +141,10 @@ function knockout(qualified) {
   const quarters = [[a[0].id, pair[0].id], [b[0].id, pair[1].id], [c[0].id, a[1].id], [b[1].id, c[1].id]]
     .map(([home, away], i) => ({ key: `q${i}`, a: home, b: away }));
   const semis = [
-    { key: 's0', a: winner(quarters[0]), b: winner(quarters[1]) },
-    { key: 's1', a: winner(quarters[2]), b: winner(quarters[3]) },
+    { key: 's0', a: winner(quarters[0], scores), b: winner(quarters[1], scores) },
+    { key: 's1', a: winner(quarters[2], scores), b: winner(quarters[3], scores) },
   ];
-  return [...quarters, ...semis, { key: 'final', a: winner(semis[0]), b: winner(semis[1]) }];
+  return [...quarters, ...semis, { key: 'final', a: winner(semis[0], scores), b: winner(semis[1], scores) }];
 }
 
 function emptyState(title, text, target, button) {
@@ -252,7 +252,7 @@ function bracketMatch(match, [title, seedA, seedB]) {
 
 function renderBracket(matches, completedGames) {
   $('knockout-actions').hidden = matches.length === 0;
-  const champion = matches.length ? winner(matches.at(-1)) : null;
+  const champion = matches.length ? winner(matches.at(-1), data.ko) : null;
   let offset = 0;
   const columns = rounds.map(({ title, slots }, index) => {
     const cards = slots.map((slot, i) => `<div class="round-slot">${bracketMatch(matches[offset + i], slot)}</div>`).join('');
@@ -299,7 +299,7 @@ function render() {
   renderPlayers();
   renderGroups(qualified);
   renderScores(matches);
-  renderBracket(knockout(qualified), completedGames);
+  renderBracket(knockout(qualified, data.ko), completedGames);
 }
 
 function saveRegistration(event) {
@@ -357,19 +357,34 @@ function saveScores(event) {
 
 function saveKnockout(event) {
   event.preventDefault();
+  const qualified = qualifiers(fixtures());
+  const previousMatches = knockout(qualified, data.ko);
   const ko = {};
-  for (const match of knockout(qualifiers(fixtures()))) {
-    const score = readScore('k', match.key);
+  const discarded = [];
+  for (const [index, { key, a, b }] of previousMatches.entries()) {
+    // Recalculate each matchup using only the earlier results accepted in this save.
+    const nextMatch = knockout(qualified, ko)[index];
+    const select = $('kw' + key);
+    if (a !== nextMatch.a || b !== nextMatch.b) {
+      const saved = data.ko[key];
+      const values = [saved?.a, saved?.b, saved?.win, $('ka' + key).value, $('kb' + key).value, select.value];
+      if (values.some(value => value != null && value !== '')) {
+        discarded.push($('partida-' + key).textContent);
+      }
+      continue;
+    }
+
+    const score = readScore('k', key);
     if (!score) return;
-    const select = $('kw' + match.key);
     const win = select.value;
     if (hasScore(score) && Number(score.a) === Number(score.b) && !win) {
       select.focus();
       notify('Selecione quem avançou no jogo empatado.', true);
       return;
     }
-    ko[match.key] = { ...score, win };
+    ko[key] = { ...score, win };
   }
+  if (discarded.length && !confirm(`Descartar os placares das partidas afetadas (${discarded.join(', ')}) e salvar as alterações?`)) return;
   if (persist({ ...data, ko })) notify('Placares do mata-mata salvos.');
 }
 
