@@ -21,7 +21,7 @@ Site oficial do campeonato. Repositório de código-fonte público.
 
 ## Funcionalidades atuais
 
-- Identidade visual do escudo: fundo branco, azul-marinho e dourado (fontes Barlow, Barlow Condensed e Chakra Petch)
+- Identidade visual do escudo: fundo branco, azul-marinho e dourado (fontes Barlow, Barlow Condensed e Chakra Petch, hospedadas em `assets/fonts`)
 - Página inicial com contagem regressiva, troféu animado e etapas do campeonato
 - 12 participantes e cadastro de nomes/nicks
 - Sorteio animado: um controle digita um código de 8 botões (ex.: `BG26-69528D`) que serve de semente do embaralhamento, e os nicks são revelados um a um nos grupos A, B e C. O código fica salvo e aparece na classificação
