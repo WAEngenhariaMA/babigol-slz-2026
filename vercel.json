@@ -1,0 +1,10 @@
+{
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/campeonato.js": {
+      "maxDuration": 60
+    }
+  }
+}
