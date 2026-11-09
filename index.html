@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap">
   <link rel="preload" as="image" href="assets/trofeu.webp" type="image/webp">
   <link rel="stylesheet" href="styles.css">
+  <script src="rules.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -82,6 +83,10 @@
   </header>
 
   <main id="conteudo" tabindex="-1">
+    <aside class="shell online-bar" aria-label="Dados oficiais">
+      <div><strong id="mode">Modo público</strong><p id="online-status" role="status">Carregando dados oficiais…</p></div>
+      <button class="button ghost small" type="button" id="refresh-data">Atualizar resultados</button>
+    </aside>
     <noscript><p class="shell notice">Ative o JavaScript para cadastrar participantes e gerenciar os jogos.</p></noscript>
 
     <!-- INÍCIO -->
@@ -220,7 +225,7 @@
       <div class="shell page-body">
         <form id="registration-form">
           <div class="players-grid" id="players"></div>
-          <div class="form-footer"><button class="button primary" type="submit"><svg class="icon"><use href="#i-check"/></svg>Salvar inscrições</button></div>
+          <div class="form-footer"><button class="button primary" type="submit" id="registration-submit" data-edit hidden><svg class="icon"><use href="#i-check"/></svg>Salvar inscrições</button></div>
         </form>
       </div>
     </section>
@@ -279,7 +284,7 @@
             </div>
 
             <div class="draw-actions">
-              <button class="button gold" type="button" id="draw-groups"><svg class="icon"><use href="#i-play"/></svg><span>Iniciar sorteio</span></button>
+              <button class="button gold" type="button" id="draw-groups" data-admin hidden><svg class="icon"><use href="#i-play"/></svg><span>Iniciar sorteio</span></button>
               <button class="button ghost-light" type="button" id="draw-skip" hidden><svg class="icon"><use href="#i-skip"/></svg>Pular animação</button>
               <button class="icon-button" type="button" id="sound-toggle" aria-pressed="true"><svg class="icon"><use href="#i-sound"/></svg><span class="sr-only">Som do sorteio</span></button>
             </div>
@@ -323,7 +328,7 @@
       <div class="shell page-body">
         <form id="scores-form">
           <div class="score-grid" id="games"></div>
-          <div id="score-actions" class="form-footer sticky-footer" hidden><button class="button primary" type="submit"><svg class="icon"><use href="#i-check"/></svg>Salvar resultados</button></div>
+          <div id="score-actions" class="form-footer sticky-footer" hidden><button class="button primary" type="submit" data-edit><svg class="icon"><use href="#i-check"/></svg>Salvar resultados</button></div>
         </form>
       </div>
     </section>
@@ -352,7 +357,7 @@
         <div class="shell">
           <p class="eyebrow">Organização do evento</p>
           <h1 id="custos-titulo" tabindex="-1">Orçamento</h1>
-          <p>Estimativa de churrasco e chopp para 12 pessoas. Confira os preços com os fornecedores. O total não inclui troféu ou premiação extra.</p>
+          <p>Estimativa de churrasco e chopp para o evento. Confira os preços com os fornecedores. O total não inclui troféu ou premiação extra.</p>
         </div>
       </header>
       <div class="shell page-body"><div id="budget"></div></div>
@@ -367,13 +372,19 @@
       </div>
       <div class="footer-data">
         <p class="eyebrow">Dados do campeonato</p>
-        <p>Os dados ficam neste navegador. Exporte o arquivo JSON para fazer backup ou levar o campeonato para outro dispositivo.</p>
+        <p>Os resultados oficiais são compartilhados online. Se houver um backup da versão anterior neste navegador, ele pode ser exportado antes da migração.</p>
         <div class="actions">
-          <button class="button ghost-light small" type="button" id="export-data"><svg class="icon"><use href="#i-download"/></svg>Exportar JSON</button>
-          <button class="button ghost-light small" type="button" id="import-data"><svg class="icon"><use href="#i-upload"/></svg>Importar JSON</button>
+          <button class="button ghost-light small" type="button" id="export-data" data-admin hidden><svg class="icon"><use href="#i-download"/></svg>Exportar JSON</button>
+          <button class="button ghost-light small" type="button" id="import-data" data-admin data-edit hidden><svg class="icon"><use href="#i-upload"/></svg>Importar JSON</button>
+          <button class="button ghost-light small" type="button" id="admin-login">Acesso administrativo</button>
+          <button class="button ghost-light small" type="button" id="admin-logout" hidden>Sair</button>
+          <button class="button ghost-light small" type="button" id="export-local" hidden>Exportar backup local</button>
+          <button class="button ghost-light small" type="button" id="compare-local" hidden>Comparar com backup local</button>
+          <button class="button ghost-light small" type="button" id="recover-data" data-admin hidden>Recuperar gravação</button>
           <input id="import" type="file" accept=".json,application/json" hidden>
-          <button class="button danger small" type="button" id="reset-data"><svg class="icon"><use href="#i-reset"/></svg>Reiniciar</button>
+          <button class="button danger small" type="button" id="reset-data" data-admin data-edit hidden><svg class="icon"><use href="#i-reset"/></svg>Reiniciar</button>
         </div>
+        <label class="restore-option" data-admin hidden><input id="restore-budget" type="checkbox" data-edit> Incluir o orçamento ao importar um backup online</label>
       </div>
     </div>
     <div class="shell footer-end"><span>PC · Xbox · PS5</span><span>Babigol SLZ · Primeira edição · 2026</span></div>
@@ -402,8 +413,41 @@
       </div>
       <p class="md-error" id="md-error" role="alert"></p>
       <footer class="modal-actions">
-        <button type="button" class="button ghost small" id="md-clear">Limpar placar</button>
-        <button type="submit" class="button primary small"><svg class="icon"><use href="#i-check"/></svg>Salvar placar</button>
+        <button type="button" class="button ghost small" id="md-clear" data-edit>Limpar placar</button>
+        <button type="submit" class="button primary small" data-edit><svg class="icon"><use href="#i-check"/></svg>Salvar placar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="login-dialog" class="modal modal-sm" aria-labelledby="login-title">
+    <form id="login-form">
+      <h2 id="login-title">Acesso administrativo</h2>
+      <label class="admin-field">Senha <input name="password" type="password" autocomplete="current-password" required></label>
+      <p id="login-error" role="alert" class="md-error"></p>
+      <footer class="modal-actions">
+        <button type="button" data-close-dialog class="button ghost small">Cancelar</button>
+        <button type="submit" class="button primary small">Entrar</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="compare-dialog" class="modal modal-sm" aria-labelledby="compare-title">
+    <h2 id="compare-title">Backup local e dados oficiais</h2>
+    <p id="compare-summary"></p>
+    <footer class="modal-actions"><button type="button" data-close-dialog class="button ghost small">Fechar</button></footer>
+  </dialog>
+
+  <dialog id="budget-dialog" class="modal modal-sm" aria-labelledby="budget-item-title">
+    <form id="budget-item-form">
+      <h2 id="budget-item-title">Item do orçamento</h2>
+      <label class="admin-field">Descrição <input name="item" maxlength="120" required data-edit></label>
+      <label class="admin-field">Categoria <select name="category" data-edit></select></label>
+      <label class="admin-field">Valor estimado (R$) <input name="amount" inputmode="decimal" maxlength="11" required data-edit></label>
+      <label class="admin-field">Ordem <input name="order" type="number" min="0" max="99999" step="1" required data-edit></label>
+      <p id="budget-item-error" role="alert" class="md-error"></p>
+      <footer class="modal-actions">
+        <button type="button" data-close-dialog class="button ghost small">Cancelar</button>
+        <button type="submit" class="button primary small" data-edit>Salvar item</button>
       </footer>
     </form>
   </dialog>

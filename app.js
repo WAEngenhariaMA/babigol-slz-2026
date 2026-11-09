@@ -1,11 +1,6 @@
 const storageKey = 'babigol2026';
 const soundKey = 'babigol-sound';
-const names = [
-  'Danillo Lopes', 'Távora', 'Danillo Araújo', 'Brian', 'Tainan', 'Wesley',
-  'Charles', 'Gustavo', 'Wellington', 'Erick', 'Leandro', 'Saulo',
-];
-const groupNames = ['A', 'B', 'C'];
-const groupPairs = [[0, 1], [2, 3], [0, 2], [1, 3], [0, 3], [1, 2]];
+const { names, groupNames, defaults, hasScore, winner, knockout, rank, sequenceFromSeed, changeKnockout } = BabigolRules;
 const eventStart = new Date('2026-11-21T11:00:00-03:00');
 const eventEnd = new Date('2026-11-21T16:00:00-03:00');
 const views = ['inicio', 'inscricoes', 'sorteio', 'grupos', 'resultados', 'chaveamento', 'custos'];
@@ -17,23 +12,22 @@ const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character =>
 })[character]);
 const icon = (name, extra = '') => `<svg class="icon ${extra}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
-function defaults() {
-  return {
-    players: names.map((name, id) => ({ id, name, nick: '' })),
-    groups: null,
-    scores: {},
-    ko: {},
-    draw: null,
-  };
+function readLocal(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
 }
 
-let data;
-try {
-  const stored = JSON.parse(localStorage.getItem(storageKey));
-  data = validBackup(stored) ? stored : defaults();
-} catch {
-  data = defaults();
-}
+const localBackup = readLocal(storageKey);
+const cacheKey = 'babigol2026-online-v3';
+let official = readLocal(cacheKey);
+if (!validBackup(official?.state) || !Array.isArray(official?.budget?.items)) official = null;
+let data = official?.state || defaults();
+let online = false;
+let admin = false;
+let refreshing = false;
+let pending = false;
+let dirty = false;
+let connectionMessage = official ? 'Exibindo a última cópia online neste navegador.' : 'Carregando dados oficiais…';
+const canEdit = () => admin && online && !pending;
 
 /* ---------- Feedback, persistence and dialogs ---------- */
 
@@ -47,16 +41,120 @@ function notify(message, error = false) {
   if (message) feedbackTimer = setTimeout(() => feedback.classList.remove('show'), 5200);
 }
 
-function persist(next) {
+async function request(action, input, fresh = false) {
+  const query = new URLSearchParams({ acao: action });
+  if (fresh) query.set('atualizar', '1');
+  const response = await fetch('/api/campeonato?' + query, {
+    cache: 'no-store',
+    credentials: 'same-origin',
+    ...(input === undefined ? {} : {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    }),
+    signal: AbortSignal.timeout(65_000),
+  });
+  const result = await response.json();
+  if (!response.ok) {
+    const error = new Error(result.message || 'O servidor não confirmou a operação.');
+    error.status = response.status;
+    throw error;
+  }
+  return result;
+}
+
+function applyMode() {
+  $('mode').textContent = admin ? 'Modo administrador' : 'Modo público';
+  $('online-status').textContent = connectionMessage;
+  $('online-status').dataset.online = String(online);
+  $('admin-login').hidden = admin;
+  $('admin-logout').hidden = !admin;
+  $('export-local').hidden = !validBackup(localBackup);
+  $('compare-local').hidden = !admin || !online || !validBackup(localBackup);
+  document.querySelectorAll('[data-admin]').forEach(control => { control.hidden = !admin; });
+  document.querySelectorAll('[data-edit]').forEach(control => { control.disabled = !canEdit(); });
+  $('draw-groups').disabled = drawing || !canEdit();
+  $('registration-submit').hidden = !admin;
+  $('score-actions').hidden = !admin || !data.groups;
+  $('players').querySelectorAll('input').forEach(input => { input.readOnly = !canEdit(); });
+  $('games').querySelectorAll('input').forEach(input => { input.readOnly = !canEdit(); });
+  $('bracket').querySelectorAll('[data-match]').forEach(button => {
+    button.disabled = !canEdit() || button.dataset.ready !== 'true';
+  });
+}
+
+function applyOfficial(next) {
+  official = next;
+  data = next.state;
+  const { categories, items, ...settings } = next.budget;
   try {
-    localStorage.setItem(storageKey, JSON.stringify(next));
-  } catch {
-    notify('Não foi possível salvar os dados neste navegador.', true);
+    localStorage.setItem(cacheKey, JSON.stringify({
+      ...next, budget: { ...settings, items: items.filter(item => item.active) },
+    }));
+  } catch { /* Browser cache is optional. */ }
+  online = true;
+  dirty = false;
+  const stamp = next.updatedAt && new Date(next.updatedAt);
+  connectionMessage = stamp && Number.isFinite(stamp.getTime())
+    ? 'Última atualização em ' + new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(stamp)
+    : 'Dados oficiais carregados · revisão ' + next.revision;
+  render();
+  renderBudget();
+  applyMode();
+}
+
+async function refresh(fresh = false) {
+  if (refreshing || pending || drawing) return;
+  if (fresh && dirty && !(await ask({
+    title: 'Atualizar os dados?',
+    text: 'As alterações ainda não salvas nesta tela serão descartadas.',
+    ok: 'Atualizar',
+  }))) return;
+  refreshing = true;
+  try {
+    const session = await request('sessao');
+    const changedRole = admin !== session.admin;
+    admin = session.admin;
+    const next = await request('estado', undefined, fresh);
+    if (!dirty || fresh || changedRole) {
+      if (next.version !== official?.version || !online || fresh || changedRole) applyOfficial(next);
+      else applyMode();
+    }
+  } catch (error) {
+    online = false;
+    connectionMessage = (error.status ? error.message : 'Falha de conexão com o servidor.') +
+      (official ? ' Exibindo a última cópia disponível.' : ' Nenhum dado oficial foi carregado.');
+    applyMode();
+  } finally {
+    refreshing = false;
+  }
+}
+
+async function mutate(action, input, version = official?.version) {
+  if (!canEdit() || refreshing) {
+    notify('Atualize os dados e entre como administrador antes de editar.', true);
     return false;
   }
-  data = next;
-  render();
-  return true;
+  pending = true;
+  applyMode();
+  try {
+    applyOfficial(await request(action, { ...input, version }));
+    return true;
+  } catch (error) {
+    if (error.status === 401) {
+      admin = false;
+      renderBudget();
+    }
+    if (!error.status || error.status === 409 || error.status >= 500) {
+      online = false;
+      connectionMessage = error.status ? error.message : 'A gravação não foi confirmada. Atualize os dados.';
+    }
+    notify(error.status ? error.message : 'A gravação não foi confirmada. Atualize antes de tentar novamente.', true);
+    return false;
+  } finally {
+    pending = false;
+    applyMode();
+  }
 }
 
 function ask({ title, text, ok = 'Confirmar', danger = false }) {
@@ -116,89 +214,9 @@ function avatar(id, extra = '') {
   return `<span class="avatar tone-${id % 4} ${extra}" aria-hidden="true">${escapeHtml(initials(id))}</span>`;
 }
 
-function fixtures() {
-  if (!data.groups) return [];
-  return data.groups.flatMap((group, g) => groupPairs.map(([a, b], index) => ({
-    key: `${g}-${index}`, a: group[a], b: group[b], g, round: Math.floor(index / 2) + 1, index,
-  })));
-}
-
-function hasScore(score) {
-  return score && score.a !== '' && score.b !== '' && score.a != null && score.b != null;
-}
-
-function standings(g) {
-  const rows = data.groups[g].map(id => ({ id, p: 0, j: 0, v: 0, e: 0, d: 0, gp: 0, gc: 0, sg: 0 }));
-  for (const fixture of fixtures().filter(match => match.g === g)) {
-    const score = data.scores[fixture.key];
-    if (!hasScore(score)) continue;
-    const a = rows.find(row => row.id === fixture.a);
-    const b = rows.find(row => row.id === fixture.b);
-    const x = Number(score.a);
-    const y = Number(score.b);
-    a.j++;
-    b.j++;
-    a.gp += x;
-    a.gc += y;
-    b.gp += y;
-    b.gc += x;
-    a.sg += x - y;
-    b.sg += y - x;
-    if (x > y) {
-      a.v++;
-      b.d++;
-      a.p += 3;
-    } else if (y > x) {
-      b.v++;
-      a.d++;
-      b.p += 3;
-    } else {
-      a.e++;
-      b.e++;
-      a.p++;
-      b.p++;
-    }
-  }
-  return rows.sort(rank);
-}
-
-function rank(a, b) {
-  return b.p - a.p || b.sg - a.sg || b.gp - a.gp || a.id - b.id;
-}
-
-function qualifiers(matches) {
-  if (matches.length !== 18 || !matches.every(match => hasScore(data.scores[match.key]))) return null;
-  const groups = groupNames.map((_, g) => standings(g));
-  const thirds = groups.map((rows, g) => ({ ...rows[2], g })).sort(rank);
-  return { groups, thirds };
-}
-
-function winner(match, scores) {
-  const score = scores[match.key];
-  if (match.a == null || match.b == null || !hasScore(score)) return null;
-  const a = Number(score.a);
-  const b = Number(score.b);
-  if (a > b || (a === b && score.win === String(match.a))) return match.a;
-  if (b > a || (a === b && score.win === String(match.b))) return match.b;
-  return null;
-}
-
-function knockout(qualified, scores) {
-  if (!qualified) return [];
-  const { groups, thirds } = qualified;
-  const [a, b, c] = groups;
-  const pair = thirds.slice(0, 2);
-  if (pair[0].g === 0 || pair[1].g === 1) {
-    if (pair[1].g !== 0 && pair[0].g !== 1) pair.reverse();
-  }
-  const quarters = [[a[0].id, pair[0].id], [b[0].id, pair[1].id], [c[0].id, a[1].id], [b[1].id, c[1].id]]
-    .map(([home, away], i) => ({ key: `q${i}`, a: home, b: away }));
-  const semis = [
-    { key: 's0', a: winner(quarters[0], scores), b: winner(quarters[1], scores) },
-    { key: 's1', a: winner(quarters[2], scores), b: winner(quarters[3], scores) },
-  ];
-  return [...quarters, ...semis, { key: 'final', a: winner(semis[0], scores), b: winner(semis[1], scores) }];
-}
+const fixtures = () => BabigolRules.fixtures(data);
+const standings = g => BabigolRules.standings(data, g);
+const qualifiers = matches => BabigolRules.qualifiers(data, matches);
 
 /* ---------- Rendering ---------- */
 
@@ -275,9 +293,9 @@ function renderPlayers() {
         <span class="jersey" aria-hidden="true">${String(entry.id + 1).padStart(2, '0')}</span>
       </div>
       <label for="name${entry.id}">Nome</label>
-      <input id="name${entry.id}" data-player="${entry.id}" type="text" value="${escapeHtml(entry.name)}" autocomplete="off">
+      <input id="name${entry.id}" data-player="${entry.id}" type="text" value="${escapeHtml(entry.name)}" autocomplete="off" maxlength="100">
       <label for="nick${entry.id}">Nick / gamertag</label>
-      <div class="input-icon">${icon('pad')}<input id="nick${entry.id}" data-player="${entry.id}" type="text" value="${escapeHtml(entry.nick)}" placeholder="Digite o nick" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="input-icon">${icon('pad')}<input id="nick${entry.id}" data-player="${entry.id}" type="text" value="${escapeHtml(entry.nick)}" placeholder="Digite o nick" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80"></div>
     </article>`).join('');
 }
 
@@ -388,7 +406,7 @@ function bracketMatch(key, match) {
   const labelA = match?.a != null ? playerLabel(match.a) : info.seeds[0];
   const labelB = match?.b != null ? playerLabel(match.b) : info.seeds[1];
   const aria = `${info.title}: ${labelA}${played ? ` ${score.a} × ${score.b} ` : ' contra '}${labelB}. ${status}`;
-  return `<button type="button" class="bm ${key === 'final' ? 'bm-final' : ''} ${played ? 'played' : ''}" data-match="${key}" ${ready ? '' : 'disabled'} aria-label="${escapeHtml(aria)}">
+  return `<button type="button" class="bm ${key === 'final' ? 'bm-final' : ''} ${played ? 'played' : ''}" data-match="${key}" data-ready="${Boolean(ready)}" ${ready && canEdit() ? '' : 'disabled'} aria-label="${escapeHtml(aria)}">
     <span class="bm-head"><span>${info.short}</span><span class="bm-status">${ready && !played ? icon('edit') : ''}${status}</span></span>
     ${team(match?.a ?? null, info.seeds[0], score.a)}
     ${team(match?.b ?? null, info.seeds[1], score.b)}
@@ -472,43 +490,6 @@ function tone(frequency, duration = 0.08, type = 'square', volume = 0.035) {
 
 function pause(ms) {
   return skipDraw ? Promise.resolve() : wait(ms);
-}
-
-function mulberry32(seed) {
-  let a = seed;
-  return () => {
-    a |= 0;
-    a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function sequenceFromSeed(seed) {
-  const sequence = [];
-  let rest = seed;
-  for (let i = 0; i < 8; i++) {
-    sequence.unshift(rest % 8);
-    rest = Math.floor(rest / 8);
-  }
-  return sequence;
-}
-
-function newDrawCode() {
-  const sequence = [...crypto.getRandomValues(new Uint8Array(8))].map(value => value % 8);
-  const seed = sequence.reduce((total, value) => total * 8 + value, 0);
-  return { sequence, seed, code: 'BG26-' + seed.toString(16).toUpperCase().padStart(6, '0') };
-}
-
-function drawGroupsFromSeed(seed) {
-  const random = mulberry32(seed);
-  const ids = data.players.map(entry => entry.id);
-  for (let i = ids.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [ids[i], ids[j]] = [ids[j], ids[i]];
-  }
-  return [ids.slice(0, 4), ids.slice(4, 8), ids.slice(8, 12)];
 }
 
 function secondaryName(id) {
@@ -673,34 +654,30 @@ async function playDraw(draw, groups) {
 }
 
 async function startDraw() {
-  if (drawing) return;
+  if (drawing || !canEdit()) return;
+  const version = official.version;
   if (data.groups) {
     const hasResults = Object.values(data.scores).some(hasScore) || Object.values(data.ko).some(hasScore);
-    const ok = await ask({
+    if (!(await ask({
       title: 'Refazer o sorteio?',
       text: hasResults
         ? 'Os grupos atuais serão substituídos e todos os placares da fase de grupos e do mata-mata serão apagados.'
         : 'Os grupos atuais serão substituídos por um novo sorteio.',
       ok: 'Sortear novamente',
       danger: hasResults,
-    });
-    if (!ok) return;
+    }))) return;
   }
-  const draw = newDrawCode();
-  const groups = drawGroupsFromSeed(draw.seed);
+  if (!(await mutate('sorteio', { confirm: true }, version))) return;
+  const draw = { ...data.draw, sequence: sequenceFromSeed(data.draw.seed) };
   drawing = true;
-  if (!persist({ ...data, groups, scores: {}, ko: {}, draw: { code: draw.code, seed: draw.seed } })) {
-    drawing = false;
-    return;
-  }
   try {
-    await playDraw(draw, groups);
+    await playDraw(draw, data.groups);
   } finally {
     drawing = false;
-    $('draw-groups').disabled = false;
     $('draw-skip').hidden = true;
+    applyMode();
   }
-  notify(`Sorteio ${draw.code} concluído. Grupos salvos.`);
+  notify('Sorteio ' + draw.code + ' concluído. Grupos salvos.');
 }
 
 function setSound(on) {
@@ -766,25 +743,70 @@ function updateCountdown() {
 
 /* ---------- Budget ---------- */
 
+const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const brl = cents => currency.format(cents / 100);
+
 function renderBudget() {
-  const items = [
-    ['Chopp 50 L', 800], ['Picanha 1,3 kg', 130], ['Fraldinha 1,5 kg', 82.5],
-    ['Alcatra 1 kg', 60], ['Toscana premium 1,2 kg', 36], ['Lombo/pernil suíno 1 kg', 30],
-    ['Sobrecoxa desossada 1 kg', 26], ['Farofa 800 g', 20], ['Vinagrete 1,5 kg', 30],
-    ['Arroz cru 800 g', 8], ['Pão de alho 12 un.', 36], ['Carvão 6 kg', 55],
-    ['Sal e temperos', 20], ['Água e gelo', 70], ['Descartáveis', 35],
+  const budget = official?.budget;
+  if (!budget) {
+    $('budget').innerHTML = '<p class="card budget-table">O orçamento será exibido quando os dados oficiais estiverem disponíveis.</p>';
+    return;
+  }
+  const { items, people, quotaCents } = budget;
+  const active = items.filter(item => item.active);
+  const total = active.reduce((sum, item) => sum + item.cents, 0);
+  const largest = Math.max(1, ...active.map(item => item.cents));
+  const expected = quotaCents * people;
+  const summary = [
+    ['Total estimado', total, 'beer'], ['Custo por pessoa (' + people + ' no rateio)', total / people, 'users'],
+    ['Cota sugerida por pessoa', quotaCents, 'check'], ['Arrecadação prevista', expected, 'table'],
+    ['Reserva prevista', expected - total, 'pin'],
   ];
-  const sum = items.reduce((total, [, cost]) => total + cost, 0);
-  const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-  const summary = [['Total estimado', sum, 'beer'], ['Por pessoa', sum / names.length, 'users'], ['Por pessoa, com margem', 130, 'check']];
   $('budget').innerHTML = `<div class="budget-summary">
-    ${summary.map(([title, cost, iconName], i) => `<div class="budget-tile ${i === 2 ? 'highlight' : ''}">${icon(iconName)}<span>${title}</span><strong>${currency.format(cost)}</strong></div>`).join('')}
+    ${summary.map(([title, amount, image], i) => `<div class="budget-tile ${i === 2 ? 'highlight' : ''}">
+      ${icon(image)}<span>${title}</span><strong>${brl(amount)}</strong></div>`).join('')}
     </div><div class="card budget-table"><table>
-      <caption class="sr-only">Detalhamento dos itens do churrasco e chopp</caption>
+      <caption class="sr-only">Itens ativos do churrasco e chopp</caption>
       <thead><tr><th scope="col">Item</th><th scope="col" class="num">Valor estimado</th><th scope="col" class="bar-col"><span class="sr-only">Proporção</span></th></tr></thead>
-      <tbody>${items.map(([name, cost]) => `<tr><th scope="row">${name}</th><td class="num">${currency.format(cost)}</td><td class="bar-col"><span class="bar" style="width:${(cost / 800) * 100}%"></span></td></tr>`).join('')}</tbody>
-      <tfoot><tr><th scope="row">Total</th><td class="num">${currency.format(sum)}</td><td class="bar-col"></td></tr></tfoot>
-    </table></div>`;
+      <tbody>${active.map(item => `<tr><th scope="row">${escapeHtml(item.item)}${item.category ? `<small class="budget-category">${escapeHtml(item.category)}</small>` : ''}</th>
+        <td class="num">${brl(item.cents)}</td><td class="bar-col"><span class="bar" style="width:${item.cents / largest * 100}%"></span></td></tr>`).join('')}</tbody>
+      <tfoot><tr><th scope="row">Total</th><td class="num">${brl(total)}</td><td class="bar-col"></td></tr></tfoot>
+    </table>${active.length ? '' : '<p>Nenhum item ativo.</p>'}</div>
+    ${admin && budget.categories ? `<section class="card budget-manage" aria-labelledby="budget-admin-title" data-admin>
+      <h2 id="budget-admin-title">Administrar orçamento</h2>
+      <div class="actions">
+        <button type="button" class="button primary small" data-budget-add data-edit>Adicionar item</button>
+      </div>
+      <form id="budget-settings" class="budget-settings">
+        <label>Pessoas no rateio <input name="people" type="number" min="1" max="9999" step="1" value="${people}" required data-edit></label>
+        <label>Cota sugerida por pessoa (R$) <input name="quota" type="text" inputmode="decimal" value="${(quotaCents / 100).toFixed(2).replace('.', ',')}" required data-edit></label>
+        <button class="button primary small" type="submit" data-edit>Salvar rateio</button>
+      </form>
+      <ul class="budget-admin-list">${items.map(item => `<li>
+        <span><strong>${escapeHtml(item.item)}</strong><small>${item.active ? 'Ativo' : 'Desativado'} · ordem ${item.order} · ${brl(item.cents)}</small></span>
+        <div class="actions">
+          <button type="button" class="button ghost small" data-budget-item="${escapeHtml(item.id)}" data-edit>Editar</button>
+          <button type="button" class="button ghost small" data-budget-toggle="${escapeHtml(item.id)}" data-edit>${item.active ? 'Desativar' : 'Restaurar'}</button>
+        </div></li>`).join('')}</ul>
+    </section>` : ''}`;
+}
+
+let budgetEditing = null;
+let budgetVersion;
+function openBudget(item) {
+  if (!canEdit()) return;
+  budgetEditing = item || null;
+  budgetVersion = official.version;
+  const form = $('budget-item-form');
+  $('budget-item-title').textContent = item ? 'Editar item' : 'Adicionar item';
+  form.elements.category.innerHTML = '<option value="">Sem categoria</option>' + official.budget.categories.map(category =>
+    '<option value="' + escapeHtml(category) + '">' + escapeHtml(category) + '</option>').join('');
+  form.elements.namedItem('item').value = item?.item ?? '';
+  form.elements.category.value = item?.category ?? '';
+  form.elements.amount.value = item ? (item.cents / 100).toFixed(2).replace('.', ',') : '';
+  form.elements.order.value = item?.order ?? (Math.max(0, ...official.budget.items.map(entry => entry.order)) + 1);
+  $('budget-item-error').textContent = '';
+  $('budget-dialog').showModal();
 }
 
 /* ---------- Main render ---------- */
@@ -807,14 +829,14 @@ function render() {
 
 /* ---------- Actions ---------- */
 
-function saveRegistration(event) {
+async function saveRegistration(event) {
   event.preventDefault();
   const players = data.players.map(entry => ({
     ...entry,
     name: $('name' + entry.id).value.trim() || names[entry.id],
     nick: $('nick' + entry.id).value.trim(),
   }));
-  if (persist({ ...data, players })) notify('Inscrições salvas neste navegador.');
+  if (await mutate('participantes', { players })) notify('Inscrições salvas no Airtable.');
 }
 
 function readScore(home, away) {
@@ -828,6 +850,8 @@ function readScore(home, away) {
 
 async function saveScores(event) {
   event.preventDefault();
+  if (!canEdit()) return;
+  const version = official.version;
   const scores = {};
   let changed = false;
   for (const match of fixtures()) {
@@ -843,21 +867,24 @@ async function saveScores(event) {
     ok: 'Continuar',
     danger: true,
   }))) return;
-  if (persist({ ...data, scores, ko: changed ? {} : data.ko })) {
+  if (await mutate('placares', { scores, confirm: true }, version)) {
     notify('Resultados salvos. A classificação foi atualizada.');
   }
 }
 
 let editingKey = null;
+let matchVersion;
 
 function currentKnockout() {
   return knockout(qualifiers(fixtures()), data.ko);
 }
 
 function openMatch(key) {
+  if (!canEdit()) return;
   const match = currentKnockout().find(entry => entry.key === key);
   if (!match || match.a == null || match.b == null) return;
   editingKey = key;
+  matchVersion = official.version;
   const score = data.ko[key] || {};
   $('md-round').textContent = key === 'final' ? 'Decisão do título' : 'Mata-mata';
   $('md-title').textContent = matchInfo[key].title;
@@ -882,38 +909,23 @@ function updateTie() {
 }
 
 async function applyKnockout(key, entry) {
-  const qualified = qualifiers(fixtures());
-  const candidate = { ...data.ko };
-  if (entry) candidate[key] = entry;
-  else delete candidate[key];
-  const before = knockout(qualified, data.ko);
+  if (!canEdit()) return false;
+  const before = currentKnockout();
   const championBefore = before.length ? winner(before.at(-1), data.ko) : null;
-  const ko = {};
-  const discarded = [];
-  for (const [index, match] of before.entries()) {
-    // Recalculate each matchup using only the earlier results accepted in this save.
-    const next = knockout(qualified, ko)[index];
-    const proposed = candidate[match.key];
-    if (match.a !== next.a || match.b !== next.b) {
-      if (proposed && [proposed.a, proposed.b, proposed.win].some(value => value != null && value !== '')) {
-        discarded.push(matchInfo[match.key].title);
-      }
-      continue;
-    }
-    if (proposed) ko[match.key] = proposed;
-  }
+  const { discarded } = changeKnockout(data, key, entry);
   if (discarded.length && !(await ask({
     title: 'Descartar partidas seguintes?',
-    text: `Este resultado muda quem avança. Os placares de ${discarded.join(', ')} serão apagados.`,
+    text: 'Este resultado muda quem avança. Os placares de ' +
+      discarded.map(match => matchInfo[match].title).join(', ') + ' serão apagados.',
     ok: 'Salvar e descartar',
     danger: true,
   }))) return false;
-  if (!persist({ ...data, ko })) return false;
-  const after = knockout(qualified, ko);
-  const championAfter = after.length ? winner(after.at(-1), ko) : null;
+  if (!(await mutate('mata-mata', { key, score: entry, confirm: true }, matchVersion))) return false;
+  const after = currentKnockout();
+  const championAfter = after.length ? winner(after.at(-1), data.ko) : null;
   if (championAfter != null && championAfter !== championBefore) {
     confetti();
-    notify(`${playerLabel(championAfter)} é o campeão do 1º Campeonato Babigol SLZ!`);
+    notify(playerLabel(championAfter) + ' é o campeão do 1º Campeonato Babigol SLZ!');
   } else {
     notify('Placar do mata-mata salvo.');
   }
@@ -947,30 +959,84 @@ async function clearMatch() {
   if (data.ko[editingKey]) await applyKnockout(editingKey, null);
 }
 
-function exportData() {
+function downloadJson(value, name) {
   const link = document.createElement('a');
-  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+  const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }));
   link.href = url;
-  link.download = 'babigol-slz-campeonato.json';
+  link.download = name;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function exportData() {
+  try {
+    downloadJson(await request('backup'), 'babigol-slz-campeonato.json');
+  } catch (error) {
+    notify(error.status ? error.message : 'O backup online não pôde ser exportado.', true);
+  }
+}
+
+function compareLocal() {
+  const count = state => state.players.filter(entry => entry.nick.trim()).length + ' nicks, ' +
+    (state.groups ? '3 grupos' : 'sem grupos') + ', ' +
+    Object.values(state.scores).filter(hasScore).length + ' placares de grupos e ' +
+    Object.values(state.ko).filter(hasScore).length + ' do mata-mata.';
+  const changed = localBackup.players.filter(entry => {
+    const remote = data.players.find(player => player.id === entry.id);
+    return remote?.name !== entry.name || remote?.nick !== entry.nick;
+  }).length;
+  const positions = groupNames.map((group, index) => {
+    const previous = localBackup.groups?.[index] || [];
+    const current = data.groups?.[index] || [];
+    const count = Array.from({ length: 4 }, (_, position) => previous[position] !== current[position]).filter(Boolean).length;
+    return group + ' (' + count + ')';
+  });
+  const changedScores = key => {
+    const local = localBackup[key];
+    const remote = data[key];
+    return [...new Set([...Object.keys(local), ...Object.keys(remote)])].filter(id => {
+      const normalize = score => hasScore(score) ? [String(score.a), String(score.b), String(score.win ?? '')].join('/') : '';
+      return normalize(local[id]) !== normalize(remote[id]);
+    }).length;
+  };
+  $('compare-summary').textContent = 'Backup local — ' + count(localBackup) + ' Online — ' + count(data) +
+    ' Diferenças em ' + changed + ' cadastros, nas posições dos grupos ' + positions.join(', ') +
+    ' e em ' + changedScores('scores') + ' placares de grupos e ' + changedScores('ko') + ' do mata-mata.';
+  $('compare-dialog').showModal();
 }
 
 async function importData(event) {
   const input = event.target;
   const file = input.files[0];
-  if (!file) return;
   input.value = '';
-
+  if (!file || !canEdit()) return;
+  const version = official.version;
   let imported;
   try {
+    if (file.size > 60_000) throw new Error();
     imported = JSON.parse(await file.text());
     if (!validBackup(imported)) throw new Error();
   } catch {
     notify('Arquivo inválido. Selecione um backup JSON do campeonato.', true);
     return;
   }
-  if (persist(imported)) notify('Backup importado.');
+  const restoreBudget = $('restore-budget').checked;
+  if (restoreBudget && !Array.isArray(imported.budget?.items)) {
+    notify('O arquivo não tem orçamento online. Desmarque a opção de orçamento para importar.', true);
+    return;
+  }
+  if (!(await ask({
+    title: 'Importar backup para o Airtable?',
+    text: 'Os dados oficiais de participantes, sorteio e partidas serão substituídos. ' +
+      (restoreBudget ? 'O rateio e os itens do orçamento presentes no arquivo também serão atualizados. ' : '') +
+      'Exporte o backup online antes de continuar.',
+    ok: 'Importar dados oficiais',
+    danger: true,
+  }))) return;
+  if (await mutate('importar', { backup: imported, confirm: true, restoreBudget }, version)) {
+    $('restore-budget').checked = false;
+    notify('Backup importado no Airtable.');
+  }
 }
 
 function validBackup(backup) {
@@ -999,16 +1065,17 @@ function validBackup(backup) {
 }
 
 async function resetAll() {
+  if (!canEdit()) return;
+  const version = official.version;
   const ok = await ask({
     title: 'Reiniciar o campeonato?',
-    text: 'Os nicks, os grupos e todos os placares deste navegador serão apagados. Exporte um backup antes, se precisar.',
-    ok: 'Apagar tudo',
+    text: 'Os nicks, os grupos e os placares oficiais serão apagados. O orçamento permanece disponível.',
+    ok: 'Reiniciar campeonato',
     danger: true,
   });
-  if (!ok) return;
-  if (persist(defaults())) {
+  if (ok && await mutate('reiniciar', { confirm: true }, version)) {
     showView('inicio');
-    notify('Campeonato reiniciado neste navegador.');
+    notify('Campeonato reiniciado no Airtable.');
   }
 }
 
@@ -1044,6 +1111,110 @@ $('match-form').addEventListener('input', updateTie);
 $('md-clear').addEventListener('click', clearMatch);
 $('match-dialog').querySelector('[data-close]').addEventListener('click', () => $('match-dialog').close());
 $('export-data').addEventListener('click', exportData);
+$('export-local').addEventListener('click', () => downloadJson(localBackup, 'babigol-slz-backup-local.json'));
+$('compare-local').addEventListener('click', compareLocal);
+$('refresh-data').addEventListener('click', () => refresh(true));
+$('admin-login').addEventListener('click', () => {
+  $('login-form').reset();
+  $('login-error').textContent = '';
+  $('login-dialog').showModal();
+});
+$('login-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const submit = form.querySelector('button[type=submit]');
+  submit.disabled = true;
+  try {
+    await request('login', { password: form.elements.password.value });
+    $('login-dialog').close();
+    await refresh(true);
+  } catch (error) {
+    $('login-error').textContent = error.status ? error.message : 'O login não foi confirmado.';
+  } finally {
+    form.elements.password.value = '';
+    submit.disabled = false;
+  }
+});
+$('admin-logout').addEventListener('click', async () => {
+  if (pending) return;
+  try {
+    await request('logout', {});
+    admin = false;
+    dirty = false;
+    render();
+    renderBudget();
+    applyMode();
+    await refresh();
+  } catch (error) {
+    notify(error.status ? error.message : 'A saída não foi confirmada.', true);
+  }
+});
+$('recover-data').addEventListener('click', async () => {
+  if (!admin || pending || !(await ask({
+    title: 'Recuperar gravação?',
+    text: 'O servidor verificará o registro da operação e restaurará os campos incompletos quando for seguro.',
+    ok: 'Verificar gravação',
+  }))) return;
+  pending = true;
+  applyMode();
+  try {
+    const result = await request('recuperar', { confirm: true });
+    notify(result.recovered ? 'Gravação recuperada.' : 'Nenhuma gravação pendente.');
+  } catch (error) {
+    notify(error.status ? error.message : 'A recuperação não foi confirmada.', true);
+  } finally {
+    pending = false;
+    await refresh(true);
+  }
+});
+$('budget').addEventListener('click', async event => {
+  const button = event.target.closest('button');
+  if (!button || !canEdit()) return;
+  if ('budgetAdd' in button.dataset) openBudget();
+  const item = official.budget.items.find(entry => entry.id === (button.dataset.budgetItem || button.dataset.budgetToggle));
+  if (!item) return;
+  if (button.dataset.budgetItem) openBudget(item);
+  if (button.dataset.budgetToggle) {
+    const version = official.version;
+    if (item.active && !(await ask({
+      title: 'Desativar item?',
+      text: 'O item será retirado do total. Você poderá restaurá-lo depois.',
+      ok: 'Desativar',
+    }))) return;
+    if (await mutate('orcamento-ativo', { id: item.id, active: !item.active }, version)) notify('Orçamento atualizado.');
+  }
+});
+$('budget').addEventListener('submit', async event => {
+  if (event.target.id !== 'budget-settings') return;
+  event.preventDefault();
+  const values = new FormData(event.target);
+  if (await mutate('orcamento-rateio', { people: Number(values.get('people')), quota: values.get('quota') })) {
+    notify('Rateio atualizado.');
+  }
+});
+$('budget-item-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const values = new FormData(event.target);
+  const item = { item: values.get('item'), category: values.get('category'), amount: values.get('amount'), order: Number(values.get('order')) };
+  if (await mutate(budgetEditing ? 'orcamento-editar' : 'orcamento-adicionar',
+    { id: budgetEditing?.id, item }, budgetVersion)) {
+    $('budget-dialog').close();
+    notify('Item salvo no Airtable.');
+  } else {
+    $('budget-item-error').textContent = $('feedback').textContent;
+  }
+});
+document.querySelectorAll('[data-close-dialog]').forEach(button => {
+  button.addEventListener('click', () => button.closest('dialog').close());
+});
+document.addEventListener('input', event => {
+  if (event.target.closest('#registration-form, #scores-form, #budget-settings')) dirty = true;
+});
+function poll() {
+  if (!document.hidden && !dirty && !document.querySelector('dialog[open]')) refresh();
+}
+setInterval(poll, 60_000);
+document.addEventListener('visibilitychange', poll);
 $('import-data').addEventListener('click', () => $('import').click());
 $('import').addEventListener('change', importData);
 $('reset-data').addEventListener('click', resetAll);
@@ -1051,6 +1222,8 @@ $('reset-data').addEventListener('click', resetAll);
 setSound(soundOn);
 renderBudget();
 render();
+applyMode();
+refresh();
 const initial = location.hash.slice(1);
 if (views.includes(initial) && initial !== 'inicio') showView(initial, { push: false, focus: false });
 if (updateCountdown()) {

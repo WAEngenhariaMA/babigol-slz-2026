@@ -479,7 +479,7 @@ abbr { text-decoration: none; }
 
 /* ---------- Forms ---------- */
 label { display: block; font-family: var(--font-display); font-weight: 700; font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-input[type="text"], input[type="number"], select {
+input[type="text"], input[type="number"], input[type="password"], select {
   width: 100%; min-height: 48px; padding: 10px 14px; border: 1.5px solid var(--line-strong); border-radius: 12px;
   background: var(--white); color: var(--ink); font-weight: 600; transition: border-color .2s, box-shadow .2s;
 }
@@ -925,3 +925,22 @@ tfoot .num { font-family: var(--font-tech); }
 @media (max-width: 420px) {
   .screen-label, .screen-status { letter-spacing: .08em; font-size: .68rem; }
 }
+
+/* Dados oficiais e formulários administrativos */
+.online-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px; padding-block: 12px; }
+.online-bar strong { color: var(--navy-900); font-size: .88rem; }
+.online-bar p { margin: 0; font-size: .85rem; }
+.online-bar p[data-online="false"] { color: #872c26; }
+.budget-category { display: block; font-weight: 400; }
+.budget-manage { margin-top: 22px; padding: clamp(14px, 3vw, 24px); }
+.budget-manage h2 { margin-bottom: 12px; }
+.budget-settings { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-block: 18px; }
+.budget-settings label, .admin-field { display: grid; gap: 5px; }
+.budget-settings label { flex: 1 1 175px; }
+.admin-field { margin-block: 12px; }
+.budget-admin-list { display: grid; padding: 0; margin: 0; list-style: none; }
+.budget-admin-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 12px 0; border-top: 1px solid #d3dceb; }
+.budget-admin-list li > span { min-width: 0; overflow-wrap: anywhere; }
+.budget-admin-list small { display: block; }
+.budget-table th[scope="row"] { overflow-wrap: anywhere; }
+.restore-option { display: block; margin-top: 10px; font-size: .88rem; }

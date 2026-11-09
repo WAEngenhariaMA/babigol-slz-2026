@@ -1,0 +1,8 @@
+{
+  "name": "babigol-slz-2026",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/v3.test.js",
+    "build": "node scripts/build.cjs"
+  }
+}
