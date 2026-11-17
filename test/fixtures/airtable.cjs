@@ -1,6 +1,10 @@
 const rules = require('../../rules');
 const { matchKeys } = require('../../server/domain');
 
+const legacyNames = [
+  'Danillo Lopes', 'Távora', 'Danillo Araújo', 'Brian', 'Tainan', 'Wesley',
+  'Charles', 'Gustavo', 'Wellington', 'Erick', 'Leandro', 'Saulo',
+];
 const categories = ['Bebidas', 'Carnes', 'Acompanhamentos', 'Outros'];
 const budget = [
   ['Chopp 50 L', 800, 'Bebidas'], ['Picanha 1,3 kg', 130, 'Carnes'], ['Fraldinha 1,5 kg', 82.5, 'Carnes'],
@@ -31,7 +35,8 @@ function mockAirtable(now = Date.now) {
   const create = fields => ({ id: 'rec' + String(++seq).padStart(14, '0'),
     createdTime: new Date(now()).toISOString(), fields: structuredClone(fields) });
   const data = {
-    Participantes: rules.defaults().players.map(player => create({ ID: player.id, Participante: player.name })),
+    // Base atual: as 12 vagas com os nomes já cadastrados.
+    Participantes: legacyNames.map((name, id) => create({ ID: id, Participante: name })),
     Partidas: matchKeys.map((key, i) => create({ Chave: key, Ordem: i + 1 })),
     Controle: [create({ Chave: 'campeonato-2026', Revisao: 0, 'Pessoas no Rateio': 12, 'Cota Sugerida por Pessoa': 130 })],
     Orcamento: budget.map(([item, cost, category], i) => create({ Item: item, Categoria: category,
@@ -98,4 +103,4 @@ function mockAirtable(now = Date.now) {
   return { data, fetcher, requests, fail(matches, phase = 'before') { faults.push({ matches, phase }); } };
 }
 
-module.exports = { mockAirtable };
+module.exports = { mockAirtable, legacyNames };

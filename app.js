@@ -1,6 +1,7 @@
 const storageKey = 'babigol2026';
 const soundKey = 'babigol-sound';
-const { names, groupNames, defaults, hasScore, winner, knockout, rank, sequenceFromSeed, changeKnockout } = BabigolRules;
+const { groupNames, defaults, hasScore, winner, knockout, rankThirds, sequenceFromSeed, changeKnockout,
+  groupSizes, format, knockoutKeys, MAX_PLAYERS, MIN_PLAYERS } = BabigolRules;
 const eventStart = new Date('2026-11-21T11:00:00-03:00');
 const eventEnd = new Date('2026-11-21T16:00:00-03:00');
 const views = ['inicio', 'inscricoes', 'sorteio', 'grupos', 'resultados', 'chaveamento', 'custos'];
@@ -74,7 +75,10 @@ function applyMode() {
   document.querySelectorAll('[data-admin]').forEach(control => { control.hidden = !admin; });
   document.querySelectorAll('[data-edit]').forEach(control => { control.disabled = !canEdit(); });
   $('draw-groups').disabled = drawing || !canEdit();
-  $('registration-submit').hidden = !admin;
+  $('registration-submit').hidden = !admin || !data.players.length;
+  $('add-player-form').querySelectorAll('input, button').forEach(control => {
+    control.disabled = !canEdit() || data.players.length >= MAX_PLAYERS;
+  });
   $('score-actions').hidden = !admin || !data.groups;
   $('players').querySelectorAll('input').forEach(input => { input.readOnly = !canEdit(); });
   $('games').querySelectorAll('input').forEach(input => { input.readOnly = !canEdit(); });
@@ -217,6 +221,34 @@ function avatar(id, extra = '') {
 const fixtures = () => BabigolRules.fixtures(data);
 const standings = g => BabigolRules.standings(data, g);
 const qualifiers = matches => BabigolRules.qualifiers(data, matches);
+const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+const listJoin = items => items.length < 2 ? items.join('') : items.slice(0, -1).join(', ') + ' e ' + items.at(-1);
+
+/** Grupos, jogos e formato: do sorteio feito ou, antes dele, previstos pela quantidade de inscritos. */
+function shape(count = data.players.length) {
+  const sizes = data.groups ? data.groups.map(group => group.length) : groupSizes(count);
+  const games = sizes.reduce((sum, size) => sum + size * (size - 1) / 2, 0);
+  return { sizes, fmt: format(sizes.length), games, koGames: knockoutKeys(sizes.length).length };
+}
+
+function describeSizes(sizes) {
+  const counts = new Map();
+  for (const size of [...sizes].sort((a, b) => b - a)) counts.set(size, (counts.get(size) || 0) + 1);
+  return listJoin([...counts].map(([size, n], i) => (i ? n : plural(n, 'grupo', 'grupos')) + ' de ' + size));
+}
+
+function describeFormat(fmt) {
+  if (!fmt) return '';
+  if (fmt.groups === 1) return 'final entre o 1º e o 2º colocado';
+  if (fmt.groups === 2) return 'semifinais cruzadas (1º de um grupo × 2º do outro) e final';
+  return 'quartas com os 2 primeiros de cada grupo e os 2 melhores 3º, semifinais e final';
+}
+
+function describeCount(count) {
+  const sizes = groupSizes(count);
+  if (!sizes.length) return 'Mínimo de ' + MIN_PLAYERS + ' inscritos para o sorteio';
+  return describeSizes(sizes) + ' · ' + describeFormat(format(sizes.length));
+}
 
 /* ---------- Rendering ---------- */
 
@@ -229,12 +261,14 @@ function emptyState(title, text, target, button, iconName = 'shuffle') {
 }
 
 function renderStats(completedGames, koDone) {
+  const { games, koGames } = shape();
+  const count = data.players.length;
   const filled = data.players.filter(entry => entry.nick.trim()).length;
   const metrics = [
-    ['users', 12, '', 'Jogadores'],
-    ['pad', filled, '/12', 'Nicks cadastrados'],
-    ['ball', completedGames, '/18', 'Jogos da fase de grupos'],
-    ['bracket', koDone, '/7', 'Jogos do mata-mata'],
+    ['users', count, '/' + MAX_PLAYERS, 'Inscritos'],
+    ['pad', filled, '/' + count, 'Nicks cadastrados'],
+    ['ball', completedGames, '/' + games, 'Jogos da fase de grupos'],
+    ['bracket', koDone, '/' + koGames, 'Jogos do mata-mata'],
   ];
   $('stats').innerHTML = metrics.map(([iconName, value, suffix, label]) => `
     <div class="metric">
@@ -260,13 +294,17 @@ function animateCounts(root) {
   });
 }
 
-function renderJourney(completedGames, koDone, champion) {
-  const filled = data.players.filter(entry => entry.nick.trim()).length;
+function renderJourney(completedGames, koDone, champion, koReady) {
+  const count = data.players.length;
+  const { sizes, games, koGames } = shape();
+  const before = Math.max(0, koGames - 1);
   const steps = [
-    ['users', 'Inscrições', `${filled}/12 nicks`, filled === 12, 'inscricoes'],
-    ['shuffle', 'Sorteio', data.groups ? 'Grupos definidos' : '3 grupos de 4', Boolean(data.groups), 'sorteio'],
-    ['table', 'Fase de grupos', `${completedGames}/18 jogos`, completedGames === 18, 'grupos'],
-    ['bracket', 'Mata-mata', `${Math.min(koDone, 6)}/6 jogos`, koDone >= 6, 'chaveamento'],
+    ['users', 'Inscrições', count + ' de até ' + MAX_PLAYERS + ' inscritos', Boolean(data.groups), 'inscricoes'],
+    ['shuffle', 'Sorteio', data.groups ? 'Grupos definidos' : sizes.length ? describeSizes(sizes) : 'Mínimo de ' + MIN_PLAYERS + ' inscritos',
+      Boolean(data.groups), 'sorteio'],
+    ['table', 'Fase de grupos', completedGames + '/' + games + ' jogos', games > 0 && completedGames === games, 'grupos'],
+    ['bracket', 'Mata-mata', before ? Math.min(koDone, before) + '/' + before + ' jogos' : 'Final direta',
+      before ? koDone >= before : koReady, 'chaveamento'],
     ['trophy', 'Grande final', champion == null ? '21 de novembro' : escapeHtml(playerLabel(champion)), champion != null, 'chaveamento'],
   ];
   const current = steps.findIndex(step => !step[3]);
@@ -282,31 +320,63 @@ function renderJourney(completedGames, koDone, champion) {
 }
 
 function renderPlayers() {
-  $('players').innerHTML = data.players.map(entry => `
+  const count = data.players.length;
+  $('signup-count').innerHTML = '<strong>' + count + '</strong><span>/' + MAX_PLAYERS + ' inscritos</span>';
+  $('signup-format').textContent = describeCount(count);
+  $('add-player-full').hidden = count < MAX_PLAYERS;
+  $('players').innerHTML = count ? data.players.map(entry => `
     <article class="player-card">
       <div class="player-top">
         ${avatar(entry.id)}
         <div class="player-id">
           <h2 id="pl-${entry.id}">${escapeHtml(playerLabel(entry.id))}</h2>
-          <small>Jogador ${String(entry.id + 1).padStart(2, '0')}</small>
+          <small>Vaga ${String(entry.id + 1).padStart(2, '0')}</small>
         </div>
-        <span class="jersey" aria-hidden="true">${String(entry.id + 1).padStart(2, '0')}</span>
+        <button type="button" class="remove-player" data-remove="${entry.id}" data-admin data-edit ${admin ? '' : 'hidden'} ${canEdit() ? '' : 'disabled'}>
+          ${icon('close')}<span class="sr-only">Remover ${escapeHtml(playerLabel(entry.id))}</span></button>
       </div>
       <label for="name${entry.id}">Nome</label>
-      <input id="name${entry.id}" data-player="${entry.id}" type="text" value="${escapeHtml(entry.name)}" autocomplete="off" maxlength="100">
+      <input id="name${entry.id}" data-player="${entry.id}" type="text" value="${escapeHtml(entry.name)}" autocomplete="off" maxlength="100" required>
       <label for="nick${entry.id}">Nick / gamertag</label>
       <div class="input-icon">${icon('pad')}<input id="nick${entry.id}" data-player="${entry.id}" type="text" value="${escapeHtml(entry.nick)}" placeholder="Digite o nick" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80"></div>
-    </article>`).join('');
+    </article>`).join('') : `<div class="card empty-state">
+      <span class="empty-icon">${icon('users')}</span>
+      <h2>Nenhum inscrito ainda</h2>
+      <p>As inscrições são feitas na hora. Cada jogador cadastrado entra no sorteio dos grupos.</p>
+    </div>`;
+  $('format-guide').innerHTML = Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, i) => i + MIN_PLAYERS)
+    .map(n => `<li class="${n === count ? 'current' : ''}"><strong>${n}</strong><span>${describeSizes(groupSizes(n))}</span>
+      <small>${describeFormat(format(groupSizes(n).length))}</small></li>`).join('');
+}
+
+function renderRules() {
+  const { sizes, fmt } = shape();
+  const items = [
+    'Grupos de no máximo 4 jogadores, formados conforme o número de inscritos, em turno único.',
+    sizes.length ? 'Com ' + plural(data.players.length, 'inscrito', 'inscritos') + ': ' + describeSizes(sizes) + '.'
+      : 'O sorteio é liberado a partir de ' + MIN_PLAYERS + ' inscritos.',
+    fmt ? 'Mata-mata: ' + describeFormat(fmt) + '.' : 'O mata-mata é montado de acordo com a quantidade de grupos.',
+    'Critérios: pontos, saldo de gols e gols marcados.',
+  ];
+  $('format-rules').innerHTML = items.map(item => '<li>' + escapeHtml(item) + '</li>').join('');
+  $('bracket-rules').textContent = !fmt ? 'O chaveamento é definido depois do sorteio, conforme a quantidade de grupos.'
+    : fmt.groups === 1 ? 'Com um grupo, o 1º e o 2º colocados disputam a final.'
+    : fmt.groups === 2 ? 'Semifinal 1: 1º do Grupo A × 2º do Grupo B. Semifinal 2: 1º do Grupo B × 2º do Grupo A. Os vencedores fazem a final.'
+    : '1º A × melhor 3º e 1º B × segundo melhor 3º formam o lado esquerdo. 1º C × 2º A e 2º B × 2º C formam o lado direito. ' +
+      'Quando necessário, os dois terceiros são trocados para evitar um confronto do mesmo grupo nas quartas. ' +
+      'Se os grupos tiverem tamanhos diferentes, os terceiros são comparados pela média de pontos, saldo e gols por jogo.';
 }
 
 function renderGroups(qualified) {
+  const { fmt } = shape();
   const confirmed = new Set(qualified ? [
     ...qualified.groups.flatMap(rows => rows.slice(0, 2).map(row => row.id)),
-    ...qualified.thirds.slice(0, 2).map(row => row.id),
+    ...qualified.thirds.slice(0, fmt?.thirds || 0).map(row => row.id),
   ] : []);
   $('standings-legend').hidden = !data.groups;
-  $('standings-legend').innerHTML = `<span><i class="zone direct"></i>1º e 2º: classificação direta</span>
-    <span><i class="zone third"></i>3º: briga pelas 2 vagas de melhor terceiro</span>
+  const direct = fmt?.groups === 1 ? '1º e 2º: disputam a final' : fmt?.groups === 2 ? '1º e 2º: semifinais' : '1º e 2º: classificação direta';
+  $('standings-legend').innerHTML = `<span><i class="zone direct"></i>${direct}</span>
+    ${fmt?.thirds ? '<span><i class="zone third"></i>3º: briga pelas 2 vagas de melhor terceiro</span>' : ''}
     <span>J jogos · V vitórias · E empates · D derrotas · SG saldo · Pts pontos</span>`;
   if (!data.groups) {
     $('groupcards').innerHTML = emptyState('Aguardando sorteio', 'As tabelas serão exibidas assim que os grupos forem definidos.', 'sorteio', 'Ir para o sorteio');
@@ -314,9 +384,14 @@ function renderGroups(qualified) {
     return;
   }
   const code = data.draw?.code ? `<p class="draw-code-note">${icon('shuffle')} Código do sorteio <strong>${escapeHtml(data.draw.code)}</strong></p>` : '';
-  $('groupcards').innerHTML = code + groupNames.map((group, index) => `
+  const all = fixtures();
+  $('groupcards').dataset.groups = data.groups.length;
+  $('groupcards').innerHTML = code + data.groups.map((members, index) => {
+    const group = groupNames[index];
+    const own = all.filter(match => match.g === index);
+    return `
     <article class="group-card">
-      <header class="group-head"><span class="group-letter" aria-hidden="true">${group}</span><h2>Grupo ${group}</h2><span class="group-games">${fixtures().filter(match => match.g === index && hasScore(data.scores[match.key])).length}/6 jogos</span></header>
+      <header class="group-head"><span class="group-letter" aria-hidden="true">${group}</span><h2>Grupo ${group}</h2><span class="group-games">${own.filter(match => hasScore(data.scores[match.key])).length}/${own.length} jogos</span></header>
       <table>
         <caption class="sr-only">Classificação do grupo ${group}</caption>
         <thead><tr><th scope="col"><span class="sr-only">Posição</span></th><th scope="col">Jogador</th>
@@ -327,23 +402,30 @@ function renderGroups(qualified) {
           <th scope="col" class="num"><abbr title="Saldo de gols">SG</abbr></th>
           <th scope="col" class="num"><abbr title="Pontos">Pts</abbr></th></tr></thead>
         <tbody>${standings(index).map((row, position) => `
-          <tr class="pos-${position + 1}${confirmed.has(row.id) ? ' qualified' : ''}">
+          <tr class="pos-${position + 1}${position === 2 && !fmt?.thirds ? ' out' : ''}${confirmed.has(row.id) ? ' qualified' : ''}">
             <td class="position"><span>${position + 1}</span></td>
             <th scope="row"><span class="cell-player">${avatar(row.id, 'sm')}<span>${escapeHtml(playerLabel(row.id))}${confirmed.has(row.id) ? ` <span class="q-badge">${icon('check')}<span class="sr-only">classificado</span></span>` : ''}</span></span></th>
             <td class="num">${row.j}</td><td class="num opt">${row.v}</td><td class="num opt">${row.e}</td><td class="num opt">${row.d}</td>
             <td class="num">${row.sg > 0 ? '+' : ''}${row.sg}</td><td class="num points">${row.p}</td>
           </tr>`).join('')}</tbody>
       </table>
-    </article>`).join('');
+    </article>`;
+  }).join('');
 
-  const thirds = groupNames.map((_, g) => ({ ...standings(g)[2], g })).sort(rank);
+  if (!fmt?.thirds) {
+    $('thirds').innerHTML = '';
+    return;
+  }
+  const uneven = new Set(data.groups.map(group => group.length)).size > 1;
+  const thirds = data.groups.map((_, g) => ({ ...standings(g)[2], g })).sort(rankThirds);
   $('thirds').innerHTML = `<article class="card thirds-card">
-    <header><p class="eyebrow">${qualified ? 'Definido' : 'Parcial'}</p><h2>Corrida dos terceiros colocados</h2><p>Os dois melhores terceiros completam as quartas de final.</p></header>
+    <header><p class="eyebrow">${qualified ? 'Definido' : 'Parcial'}</p><h2>Corrida dos terceiros colocados</h2>
+      <p>Os dois melhores terceiros completam as quartas de final.${uneven ? ' Como os grupos têm tamanhos diferentes, a comparação usa a média por jogo.' : ''}</p></header>
     <ol class="thirds-list">${thirds.map((row, index) => `
       <li class="${index < 2 ? 'in' : 'out'}">
         <span class="t-pos">${index + 1}º</span>${avatar(row.id, 'sm')}
         <span class="t-name">${escapeHtml(playerLabel(row.id))}<small>3º do grupo ${groupNames[row.g]}</small></span>
-        <span class="t-stat"><strong>${row.p}</strong> pts</span><span class="t-stat">${row.sg > 0 ? '+' : ''}${row.sg} SG</span>
+        <span class="t-stat"><strong>${row.p}</strong> pts${uneven ? ' em ' + row.j + ' j' : ''}</span><span class="t-stat">${row.sg > 0 ? '+' : ''}${row.sg} SG</span>
         <span class="t-tag">${index < 2 ? 'Classifica' : 'Fora'}</span>
       </li>`).join('')}</ol>
   </article>`;
@@ -352,15 +434,18 @@ function renderGroups(qualified) {
 function renderScores(matches) {
   $('score-actions').hidden = matches.length === 0;
   if (!matches.length) {
-    $('games').innerHTML = emptyState('Nenhum jogo disponível', 'Faça o sorteio para liberar os 18 jogos da fase de grupos.', 'sorteio', 'Ir para o sorteio');
+    $('games').innerHTML = emptyState('Nenhum jogo disponível', 'Faça o sorteio para liberar os jogos da fase de grupos.', 'sorteio', 'Ir para o sorteio');
     return;
   }
-  $('games').innerHTML = groupNames.map((group, g) => {
+  $('games').dataset.groups = data.groups.length;
+  $('games').innerHTML = data.groups.map((_, g) => {
+    const group = groupNames[g];
     const groupMatches = matches.filter(match => match.g === g);
     const done = groupMatches.filter(match => hasScore(data.scores[match.key])).length;
+    const rounds = [...new Set(groupMatches.map(match => match.round))];
     return `<article class="score-group">
-      <header class="group-head"><span class="group-letter" aria-hidden="true">${group}</span><h2>Grupo ${group}</h2><span class="group-games">${done}/6 jogos</span></header>
-      ${[1, 2, 3].map(round => `<p class="round-tag">Rodada ${round}</p>
+      <header class="group-head"><span class="group-letter" aria-hidden="true">${group}</span><h2>Grupo ${group}</h2><span class="group-games">${done}/${groupMatches.length} jogos</span></header>
+      ${rounds.map(round => `<p class="round-tag">Rodada ${round}</p>
         ${groupMatches.filter(match => match.round === round).map(match => {
           const score = data.scores[match.key] || {};
           const label = `Jogo ${group}${match.index + 1}`;
@@ -376,18 +461,33 @@ function renderScores(matches) {
   }).join('');
 }
 
-const matchInfo = {
-  q0: { short: 'QF1', title: 'Quartas de final · Jogo 1', seeds: ['1º do Grupo A', 'Melhor 3º'] },
-  q1: { short: 'QF2', title: 'Quartas de final · Jogo 2', seeds: ['1º do Grupo B', '2º melhor 3º'] },
-  q2: { short: 'QF3', title: 'Quartas de final · Jogo 3', seeds: ['1º do Grupo C', '2º do Grupo A'] },
-  q3: { short: 'QF4', title: 'Quartas de final · Jogo 4', seeds: ['2º do Grupo B', '2º do Grupo C'] },
-  s0: { short: 'SF1', title: 'Semifinal 1', seeds: ['Vencedor QF1', 'Vencedor QF2'] },
-  s1: { short: 'SF2', title: 'Semifinal 2', seeds: ['Vencedor QF3', 'Vencedor QF4'] },
-  final: { short: 'Final', title: 'Grande final', seeds: ['Vencedor SF1', 'Vencedor SF2'] },
-};
+function groupCount() {
+  return data.groups?.length || groupSizes(data.players.length).length;
+}
+
+function koInfo(count = groupCount()) {
+  const final = { short: 'Final', title: 'Grande final', seeds: ['Vencedor SF1', 'Vencedor SF2'] };
+  if (count === 1) return { final: { ...final, seeds: ['1º colocado', '2º colocado'] } };
+  if (count === 2) {
+    return {
+      s0: { short: 'SF1', title: 'Semifinal 1', seeds: ['1º do Grupo A', '2º do Grupo B'] },
+      s1: { short: 'SF2', title: 'Semifinal 2', seeds: ['1º do Grupo B', '2º do Grupo A'] },
+      final,
+    };
+  }
+  return {
+    q0: { short: 'QF1', title: 'Quartas de final · Jogo 1', seeds: ['1º do Grupo A', 'Melhor 3º'] },
+    q1: { short: 'QF2', title: 'Quartas de final · Jogo 2', seeds: ['1º do Grupo B', '2º melhor 3º'] },
+    q2: { short: 'QF3', title: 'Quartas de final · Jogo 3', seeds: ['1º do Grupo C', '2º do Grupo A'] },
+    q3: { short: 'QF4', title: 'Quartas de final · Jogo 4', seeds: ['2º do Grupo B', '2º do Grupo C'] },
+    s0: { short: 'SF1', title: 'Semifinal 1', seeds: ['Vencedor QF1', 'Vencedor QF2'] },
+    s1: { short: 'SF2', title: 'Semifinal 2', seeds: ['Vencedor QF3', 'Vencedor QF4'] },
+    final,
+  };
+}
 
 function bracketMatch(key, match) {
-  const info = matchInfo[key];
+  const info = koInfo()[key];
   const score = (match && data.ko[key]) || {};
   const ready = match && match.a != null && match.b != null;
   const decided = match ? winner(match, data.ko) : null;
@@ -414,6 +514,13 @@ function bracketMatch(key, match) {
 }
 
 function renderBracket(matches, completedGames) {
+  const count = groupCount();
+  const { games } = shape();
+  if (!count) {
+    $('bracket').innerHTML = `<div class="bracket-note">${icon('users')}<p><strong>Aguardando inscrições</strong>
+      O chaveamento é montado depois do sorteio, a partir de ${MIN_PLAYERS} inscritos.</p></div>`;
+    return;
+  }
   const byKey = Object.fromEntries(matches.map(match => [match.key, match]));
   const champion = matches.length ? winner(byKey.final, data.ko) : null;
   const slot = key => {
@@ -422,27 +529,38 @@ function renderBracket(matches, completedGames) {
     const fed = match && match.a != null && match.b != null;
     return `<div class="b-slot ${done ? 'done' : ''} ${fed ? 'fed' : ''}">${bracketMatch(key, match)}</div>`;
   };
-  const note = matches.length ? '' : `<div class="bracket-note">${icon('clock')}<p><strong>Mata-mata bloqueado</strong> O chaveamento é liberado após os 18 jogos da fase de grupos. <span class="progress-text">${completedGames}/18 concluídos</span></p>
-    <span class="progress" aria-hidden="true"><span style="width:${(completedGames / 18) * 100}%"></span></span></div>`;
+  const note = matches.length ? '' : `<div class="bracket-note">${icon('clock')}<p><strong>Mata-mata bloqueado</strong> O chaveamento é liberado após os ${games} jogos da fase de grupos.${data.groups ? ` <span class="progress-text">${completedGames}/${games} concluídos</span>` : ' Os confrontos abaixo seguem a quantidade atual de inscritos.'}</p>
+    <span class="progress" aria-hidden="true"><span style="width:${games ? (completedGames / games) * 100 : 0}%"></span></span></div>`;
   const championBlock = champion == null
     ? `<div class="champion pending"><span>Campeão</span><strong>A definir</strong></div>`
     : `<div class="champion crowned">${icon('crown')}<span>Campeão 2026</span><strong>${escapeHtml(playerLabel(champion))}</strong></div>`;
-  $('bracket').innerHTML = `${note}
-    <div class="bracket" role="group" aria-label="Chaveamento do mata-mata">
-      <div class="b-labels" aria-hidden="true"><span>Quartas</span><span>Semifinal</span><span class="lbl-final">Final</span><span>Semifinal</span><span>Quartas</span></div>
-      <div class="b-grid">
-        <div class="b-col q left"><p class="col-label">Quartas · Lado esquerdo</p>${slot('q0')}${slot('q1')}</div>
-        <div class="b-col s left"><p class="col-label">Semifinal 1</p>${slot('s0')}</div>
-        <div class="b-col center ${champion == null ? '' : 'has-champion'}">
+  const center = `<div class="b-col center ${champion == null ? '' : 'has-champion'}">
           <div class="center-top">
             <div class="mini-trophy"><div class="rays" aria-hidden="true"></div><img src="assets/trofeu-sm.webp" width="360" height="559" alt="Troféu do campeão" loading="lazy"></div>
           </div>
           <div class="center-mid"><p class="col-label final-label">Grande final</p><div class="b-slot final-slot">${bracketMatch('final', byKey.final)}</div></div>
           <div class="center-bottom">${championBlock}</div>
-        </div>
+        </div>`;
+  const layouts = {
+    1: () => ({ labels: ['Final'], columns: center }),
+    2: () => ({
+      labels: ['Semifinal', 'Final', 'Semifinal'],
+      columns: `<div class="b-col s left"><p class="col-label">Semifinal 1</p>${slot('s0')}</div>${center}
+        <div class="b-col s right"><p class="col-label">Semifinal 2</p>${slot('s1')}</div>`,
+    }),
+    3: () => ({
+      labels: ['Quartas', 'Semifinal', 'Final', 'Semifinal', 'Quartas'],
+      columns: `<div class="b-col q left"><p class="col-label">Quartas · Lado esquerdo</p>${slot('q0')}${slot('q1')}</div>
+        <div class="b-col s left"><p class="col-label">Semifinal 1</p>${slot('s0')}</div>${center}
         <div class="b-col s right"><p class="col-label">Semifinal 2</p>${slot('s1')}</div>
-        <div class="b-col q right"><p class="col-label">Quartas · Lado direito</p>${slot('q2')}${slot('q3')}</div>
-      </div>
+        <div class="b-col q right"><p class="col-label">Quartas · Lado direito</p>${slot('q2')}${slot('q3')}</div>`,
+    }),
+  };
+  const { labels, columns } = layouts[count]();
+  $('bracket').innerHTML = `${note}
+    <div class="bracket size-${count}" role="group" aria-label="Chaveamento do mata-mata">
+      <div class="b-labels" aria-hidden="true">${labels.map(label => `<span${label === 'Final' ? ' class="lbl-final"' : ''}>${label}</span>`).join('')}</div>
+      <div class="b-grid">${columns}</div>
     </div>`;
 }
 
@@ -501,22 +619,38 @@ function slotContent(id) {
   return `${avatar(id)}<span class="slot-text"><strong>${escapeHtml(playerLabel(id))}</strong><small>${escapeHtml(secondaryName(id))}</small></span>`;
 }
 
+function boardSizes() {
+  return data.groups ? data.groups.map(group => group.length) : groupSizes(data.players.length);
+}
+
+function groupList(count) {
+  return listJoin(groupNames.slice(0, count));
+}
+
 function renderDrawBoard() {
   if (drawing) return;
-  $('draw-board').innerHTML = groupNames.map((group, g) => `
+  const sizes = boardSizes();
+  const count = data.players.length;
+  $('draw-board').style.setProperty('--groups', Math.max(sizes.length, 1));
+  $('draw-board').innerHTML = sizes.length ? sizes.map((size, g) => {
+    const group = groupNames[g];
+    return `
     <div class="draw-group" data-group="${g}">
       <header><span>Grupo</span><strong>${group}</strong></header>
-      <ol>${[0, 1, 2, 3].map(s => {
+      <ol>${Array.from({ length: size }, (_, s) => {
         const id = data.groups?.[g][s];
         return `<li class="draw-slot ${id == null ? '' : 'filled static'}" data-slot="${g}-${s}">
           <span class="slot-n">${group}${s + 1}</span>
           <span class="slot-body">${id == null ? '<span class="slot-empty">Vaga aberta</span>' : slotContent(id)}</span>
         </li>`;
       }).join('')}</ol>
-    </div>`).join('');
+    </div>`;
+  }).join('') : `<div class="draw-waiting">${icon('users')}<strong>${plural(count, 'inscrito', 'inscritos')}</strong>
+      <span>O sorteio é liberado a partir de ${MIN_PLAYERS} jogadores.</span>
+      <a class="button primary small" href="#inscricoes" data-view="inscricoes">Ir para as inscrições</a></div>`;
   const sequence = data.draw?.seed != null ? sequenceFromSeed(data.draw.seed) : null;
   renderCodeSlots(sequence);
-  $('code-text').textContent = data.draw?.code || (data.groups ? 'BG26-······' : 'BG26-······');
+  $('code-text').textContent = data.draw?.code || 'BG26-······';
   $('draw-status').textContent = data.groups ? 'Sorteio realizado' : 'Aguardando';
   $('draw-stage').dataset.state = data.groups ? 'done' : 'idle';
   $('draw-groups').querySelector('span').textContent = data.groups ? 'Refazer sorteio' : 'Iniciar sorteio';
@@ -524,7 +658,11 @@ function renderDrawBoard() {
   if (data.groups) {
     $('reel-label').textContent = 'Sorteio concluído';
     $('reel-name').textContent = data.draw?.code || 'Grupos definidos';
-    $('reel-sub').textContent = 'Os grupos A, B e C estão definidos';
+    $('reel-sub').textContent = data.groups.length === 1 ? 'O grupo A está definido' : 'Os grupos ' + groupList(data.groups.length) + ' estão definidos';
+  } else {
+    $('reel-label').textContent = 'Pronto para sortear';
+    $('reel-name').textContent = 'Press start';
+    $('reel-sub').textContent = plural(count, 'jogador', 'jogadores') + ' · ' + (sizes.length ? describeSizes(sizes) : 'mínimo de ' + MIN_PLAYERS);
   }
 }
 
@@ -630,8 +768,10 @@ async function playDraw(draw, groups) {
   $('draw-status').textContent = 'Sorteando';
   const pool = data.players.map(entry => entry.id);
   let index = 0;
-  for (let s = 0; s < 4; s++) {
-    for (let g = 0; g < 3; g++) {
+  const deepest = Math.max(...groups.map(group => group.length));
+  for (let s = 0; s < deepest; s++) {
+    for (let g = 0; g < groups.length; g++) {
+      if (s >= groups[g].length) continue;
       const id = groups[g][s];
       await spinReel(pool, id, `Grupo ${groupNames[g]} · Vaga ${s + 1}`, index);
       pool.splice(pool.indexOf(id), 1);
@@ -644,7 +784,7 @@ async function playDraw(draw, groups) {
   $('draw-board').querySelectorAll('.draw-group').forEach(group => group.classList.remove('active'));
   stage.dataset.state = 'done';
   $('draw-status').textContent = 'Sorteio realizado';
-  setReel('Sorteio concluído', draw.code, 'Grupos A, B e C definidos. Boa sorte a todos!');
+  setReel('Sorteio concluído', draw.code, (groups.length === 1 ? 'Grupo A definido' : 'Grupos ' + groupList(groups.length) + ' definidos') + '. Boa sorte a todos!');
   $('draw-skip').hidden = true;
   $('draw-groups').disabled = false;
   $('draw-groups').querySelector('span').textContent = 'Refazer sorteio';
@@ -655,6 +795,10 @@ async function playDraw(draw, groups) {
 
 async function startDraw() {
   if (drawing || !canEdit()) return;
+  if (data.players.length < MIN_PLAYERS) {
+    notify('Inscreva pelo menos ' + MIN_PLAYERS + ' jogadores para fazer o sorteio.', true);
+    return;
+  }
   const version = official.version;
   if (data.groups) {
     const hasResults = Object.values(data.scores).some(hasScore) || Object.values(data.ko).some(hasScore);
@@ -819,8 +963,9 @@ function render() {
   const koDone = koMatches.filter(match => winner(match, data.ko) != null).length;
   const champion = koMatches.length ? winner(koMatches.at(-1), data.ko) : null;
   renderStats(completedGames, koDone);
-  renderJourney(completedGames, koDone, champion);
+  renderJourney(completedGames, koDone, champion, koMatches.length > 0);
   renderPlayers();
+  renderRules();
   renderGroups(qualified);
   renderScores(matches);
   renderBracket(koMatches, completedGames);
@@ -829,14 +974,67 @@ function render() {
 
 /* ---------- Actions ---------- */
 
+function rosterFromForm() {
+  return data.players.map(entry => ({
+    id: entry.id,
+    name: $('name' + entry.id)?.value.trim() || entry.name,
+    nick: $('nick' + entry.id)?.value.trim() ?? entry.nick,
+  }));
+}
+
+async function saveRoster(players, message) {
+  const changedSet = players.length !== data.players.length || players.some(entry => entry.id == null) ||
+    data.players.some(entry => !players.some(other => other.id === entry.id));
+  const version = official.version;
+  if (data.groups && changedSet) {
+    const hasResults = Object.values(data.scores).some(hasScore) || Object.values(data.ko).some(hasScore);
+    if (!(await ask({
+      title: 'Alterar os inscritos?',
+      text: 'Os grupos já foram sorteados. Mudar a lista de inscritos apaga o sorteio' +
+        (hasResults ? ' e todos os placares' : '') + '. Depois, faça um novo sorteio.',
+      ok: 'Alterar e apagar o sorteio',
+      danger: true,
+    }))) return false;
+  }
+  if (!(await mutate('participantes', { players, confirm: true }, version))) return false;
+  notify(message);
+  return true;
+}
+
 async function saveRegistration(event) {
   event.preventDefault();
-  const players = data.players.map(entry => ({
-    ...entry,
-    name: $('name' + entry.id).value.trim() || names[entry.id],
-    nick: $('nick' + entry.id).value.trim(),
-  }));
-  if (await mutate('participantes', { players })) notify('Inscrições salvas no Airtable.');
+  if (!canEdit()) return;
+  await saveRoster(rosterFromForm(), 'Inscrições salvas no Airtable.');
+}
+
+async function addPlayer(event) {
+  event.preventDefault();
+  if (!canEdit()) return;
+  const form = event.currentTarget;
+  const name = form.elements.name.value.trim();
+  const nick = form.elements.nick.value.trim();
+  if (!name) return;
+  if (data.players.length >= MAX_PLAYERS) {
+    notify('O campeonato já tem ' + MAX_PLAYERS + ' inscritos.', true);
+    return;
+  }
+  const label = (nick || name).toLocaleLowerCase('pt-BR');
+  if (data.players.some(entry => (entry.nick || entry.name).toLocaleLowerCase('pt-BR') === label)) {
+    notify('Já existe um jogador com esse nome ou nick. Diferencie pelo nick.', true);
+    form.elements.nick.focus();
+    return;
+  }
+  if (await saveRoster([...rosterFromForm(), { id: null, name, nick }], (nick || name) + ' inscrito no campeonato.')) {
+    form.reset();
+    form.elements.name.focus();
+  }
+}
+
+async function removePlayer(id) {
+  if (!canEdit()) return;
+  const label = playerLabel(id);
+  if (!data.groups && !(await ask({ title: 'Remover inscrição?', text: label + ' sairá da lista de inscritos.', ok: 'Remover' }))) return;
+  await saveRoster(rosterFromForm().filter(entry => entry.id !== id), label + ' removido das inscrições.');
 }
 
 function readScore(home, away) {
@@ -887,7 +1085,7 @@ function openMatch(key) {
   matchVersion = official.version;
   const score = data.ko[key] || {};
   $('md-round').textContent = key === 'final' ? 'Decisão do título' : 'Mata-mata';
-  $('md-title').textContent = matchInfo[key].title;
+  $('md-title').textContent = koInfo()[key].title;
   $('md-name-a').textContent = playerLabel(match.a);
   $('md-name-b').textContent = playerLabel(match.b);
   $('md-avatar-a').innerHTML = avatar(match.a);
@@ -916,7 +1114,7 @@ async function applyKnockout(key, entry) {
   if (discarded.length && !(await ask({
     title: 'Descartar partidas seguintes?',
     text: 'Este resultado muda quem avança. Os placares de ' +
-      discarded.map(match => matchInfo[match].title).join(', ') + ' serão apagados.',
+      discarded.map(match => koInfo()[match].title).join(', ') + ' serão apagados.',
     ok: 'Salvar e descartar',
     danger: true,
   }))) return false;
@@ -978,17 +1176,21 @@ async function exportData() {
 
 function compareLocal() {
   const count = state => state.players.filter(entry => entry.nick.trim()).length + ' nicks, ' +
-    (state.groups ? '3 grupos' : 'sem grupos') + ', ' +
+    plural(state.players.length, 'inscrito', 'inscritos') + ', ' +
+    (state.groups ? plural(state.groups.length, 'grupo', 'grupos') : 'sem grupos') + ', ' +
     Object.values(state.scores).filter(hasScore).length + ' placares de grupos e ' +
     Object.values(state.ko).filter(hasScore).length + ' do mata-mata.';
-  const changed = localBackup.players.filter(entry => {
-    const remote = data.players.find(player => player.id === entry.id);
-    return remote?.name !== entry.name || remote?.nick !== entry.nick;
+  const changed = [...new Set([...localBackup.players, ...data.players].map(entry => entry.id))].filter(id => {
+    const local = localBackup.players.find(player => player.id === id);
+    const remote = data.players.find(player => player.id === id);
+    return remote?.name !== local?.name || remote?.nick !== local?.nick;
   }).length;
-  const positions = groupNames.map((group, index) => {
+  const groupTotal = Math.max(localBackup.groups?.length || 0, data.groups?.length || 0, 1);
+  const positions = groupNames.slice(0, groupTotal).map((group, index) => {
     const previous = localBackup.groups?.[index] || [];
     const current = data.groups?.[index] || [];
-    const count = Array.from({ length: 4 }, (_, position) => previous[position] !== current[position]).filter(Boolean).length;
+    const size = Math.max(previous.length, current.length);
+    const count = Array.from({ length: size }, (_, position) => previous[position] !== current[position]).filter(Boolean).length;
     return group + ' (' + count + ')';
   });
   const changedScores = key => {
@@ -1040,10 +1242,10 @@ async function importData(event) {
 }
 
 function validBackup(backup) {
-  if (!Array.isArray(backup?.players) || backup.players.length !== names.length) return false;
+  if (!Array.isArray(backup?.players) || backup.players.length > MAX_PLAYERS) return false;
   const ids = new Set(backup.players.map(entry => entry?.id));
-  if (ids.size !== names.length || !backup.players.every(entry =>
-    Number.isInteger(entry?.id) && entry.id >= 0 && entry.id < names.length &&
+  if (ids.size !== backup.players.length || !backup.players.every(entry =>
+    Number.isInteger(entry?.id) && entry.id >= 0 && entry.id < MAX_PLAYERS &&
     typeof entry.name === 'string' && typeof entry.nick === 'string'
   )) return false;
 
@@ -1057,9 +1259,10 @@ function validBackup(backup) {
   if (draw != null && !(isRecord(draw) && typeof draw.code === 'string' &&
     Number.isInteger(draw.seed) && draw.seed >= 0 && draw.seed < 8 ** 8)) return false;
 
-  if (groups === null) return true;
-  if (!Array.isArray(groups) || groups.length !== groupNames.length ||
-    !groups.every(group => Array.isArray(group) && group.length === 4)) return false;
+  if (groups == null) return true;
+  const sizes = groupSizes(backup.players.length);
+  if (!Array.isArray(groups) || groups.length !== sizes.length ||
+    !groups.every((group, g) => Array.isArray(group) && group.length === sizes[g])) return false;
   const groupIds = groups.flat();
   return new Set(groupIds).size === ids.size && groupIds.every(id => ids.has(id));
 }
@@ -1069,7 +1272,7 @@ async function resetAll() {
   const version = official.version;
   const ok = await ask({
     title: 'Reiniciar o campeonato?',
-    text: 'Os nicks, os grupos e os placares oficiais serão apagados. O orçamento permanece disponível.',
+    text: 'Os inscritos, os grupos e os placares oficiais serão apagados. O orçamento permanece disponível.',
     ok: 'Reiniciar campeonato',
     danger: true,
   });
@@ -1099,9 +1302,14 @@ $('players').addEventListener('input', event => {
   const id = Number(event.target.dataset.player);
   if (Number.isNaN(id)) return;
   const nick = $('nick' + id).value.trim();
-  $('pl-' + id).textContent = nick || $('name' + id).value.trim() || names[id];
+  $('pl-' + id).textContent = nick || $('name' + id).value.trim() || player(id)?.name || '';
+});
+$('players').addEventListener('click', event => {
+  const button = event.target.closest('[data-remove]');
+  if (button && !button.disabled) removePlayer(Number(button.dataset.remove));
 });
 $('registration-form').addEventListener('submit', saveRegistration);
+$('add-player-form').addEventListener('submit', addPlayer);
 $('draw-groups').addEventListener('click', startDraw);
 $('draw-skip').addEventListener('click', () => { skipDraw = true; });
 $('sound-toggle').addEventListener('click', () => setSound(!soundOn));
@@ -1208,7 +1416,7 @@ document.querySelectorAll('[data-close-dialog]').forEach(button => {
   button.addEventListener('click', () => button.closest('dialog').close());
 });
 document.addEventListener('input', event => {
-  if (event.target.closest('#registration-form, #scores-form, #budget-settings')) dirty = true;
+  if (event.target.closest('#registration-form, #add-player-form, #scores-form, #budget-settings')) dirty = true;
 });
 function poll() {
   if (!document.hidden && !dirty && !document.querySelector('dialog[open]')) refresh();

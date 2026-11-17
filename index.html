@@ -55,8 +55,8 @@
 
   <div class="ticker" aria-hidden="true">
     <div class="ticker-track">
-      <span>1º Campeonato Babigol SLZ</span><span>FIFA 26 · Pro Clubs</span><span>21.11.2026 · 11h às 16h</span><span>PC · Xbox · PS5</span><span>12 jogadores · 3 grupos · 1 taça</span><span>Sorteio oficial ao vivo</span>
-      <span>1º Campeonato Babigol SLZ</span><span>FIFA 26 · Pro Clubs</span><span>21.11.2026 · 11h às 16h</span><span>PC · Xbox · PS5</span><span>12 jogadores · 3 grupos · 1 taça</span><span>Sorteio oficial ao vivo</span>
+      <span>1º Campeonato Babigol SLZ</span><span>FIFA 26 · Pro Clubs</span><span>21.11.2026 · 11h às 16h</span><span>PC · Xbox · PS5</span><span>Até 12 jogadores · grupos de até 4 · 1 taça</span><span>Sorteio oficial ao vivo</span>
+      <span>1º Campeonato Babigol SLZ</span><span>FIFA 26 · Pro Clubs</span><span>21.11.2026 · 11h às 16h</span><span>PC · Xbox · PS5</span><span>Até 12 jogadores · grupos de até 4 · 1 taça</span><span>Sorteio oficial ao vivo</span>
     </div>
   </div>
 
@@ -114,7 +114,7 @@
               <li><svg class="icon"><use href="#i-pad"/></svg>Xbox</li>
               <li><svg class="icon"><use href="#i-ps"/></svg>PS5</li>
             </ul>
-            <p class="hero-intro">Do sorteio ao vivo à grande final. Doze jogadores, três grupos e uma única taça em disputa.</p>
+            <p class="hero-intro">Do sorteio ao vivo à grande final. Inscrições na hora, grupos de até quatro jogadores e uma única taça em disputa.</p>
             <div class="countdown-wrap">
               <div class="event-date">
                 <svg class="icon"><use href="#i-calendar"/></svg>
@@ -159,7 +159,7 @@
             <span class="quick-icon"><svg class="icon"><use href="#i-shuffle"/></svg></span>
             <span class="quick-index">01 · Grupos</span>
             <strong>Sorteio oficial</strong>
-            <span>O controle digita o código e revela os grupos A, B e C ao vivo.</span>
+            <span>O controle digita o código e revela os grupos ao vivo, conforme o número de inscritos.</span>
             <svg class="icon quick-arrow" aria-hidden="true"><use href="#i-arrow"/></svg>
           </a>
           <a class="quick-card" href="#resultados" data-view="resultados">
@@ -195,12 +195,7 @@
             <span class="info-icon"><svg class="icon"><use href="#i-table"/></svg></span>
             <p class="eyebrow">Regulamento</p>
             <h2>Formato da competição</h2>
-            <ul class="check-list">
-              <li>Três grupos de quatro jogadores em turno único.</li>
-              <li>Avançam os dois primeiros de cada grupo e os dois melhores terceiros.</li>
-              <li>Os oito classificados disputam quartas, semifinais e a final.</li>
-              <li>Critérios: pontos, saldo de gols e gols marcados.</li>
-            </ul>
+            <ul class="check-list" id="format-rules"></ul>
           </article>
           <article class="card info-card">
             <span class="info-icon"><svg class="icon"><use href="#i-beer"/></svg></span>
@@ -219,14 +214,31 @@
         <div class="shell">
           <p class="eyebrow">Cadastro</p>
           <h1 id="inscricoes-titulo" tabindex="-1">Inscrições</h1>
-          <p>Edite os nomes e nicks dos 12 participantes. O nick, quando preenchido, aparece no sorteio, nas tabelas e no chaveamento.</p>
+          <p>Inscreva os jogadores na hora, até 12. Os grupos (no máximo 4 por grupo) e o chaveamento são montados conforme a quantidade de inscritos. O nick, quando preenchido, aparece no sorteio, nas tabelas e no chaveamento.</p>
         </div>
       </header>
       <div class="shell page-body">
+        <div class="signup-bar">
+          <div class="signup-count" id="signup-count"></div>
+          <p class="signup-format" id="signup-format"></p>
+        </div>
+        <form id="add-player-form" class="card add-player" data-admin hidden autocomplete="off">
+          <h2>Nova inscrição</h2>
+          <label for="add-name">Nome</label>
+          <input id="add-name" name="name" type="text" maxlength="100" required>
+          <label for="add-nick">Nick / gamertag <small>(opcional)</small></label>
+          <input id="add-nick" name="nick" type="text" maxlength="80" autocapitalize="off" spellcheck="false">
+          <button class="button gold" type="submit"><svg class="icon"><use href="#i-users"/></svg>Inscrever</button>
+          <p class="add-full" id="add-player-full" hidden>Limite de 12 inscritos atingido.</p>
+        </form>
         <form id="registration-form">
           <div class="players-grid" id="players"></div>
-          <div class="form-footer"><button class="button primary" type="submit" id="registration-submit" data-edit hidden><svg class="icon"><use href="#i-check"/></svg>Salvar inscrições</button></div>
+          <div class="form-footer"><button class="button primary" type="submit" id="registration-submit" data-edit hidden><svg class="icon"><use href="#i-check"/></svg>Salvar alterações</button></div>
         </form>
+        <details class="card rules format-help">
+          <summary>Como os grupos e o mata-mata são formados</summary>
+          <ol class="format-guide" id="format-guide"></ol>
+        </details>
       </div>
     </section>
 
@@ -236,7 +248,7 @@
         <div class="shell">
           <p class="eyebrow">Fase de grupos</p>
           <h1 id="sorteio-titulo" tabindex="-1">Sorteio oficial</h1>
-          <p>O controle digita um código único de 8 botões. Esse código gera a ordem do sorteio e os 12 jogadores são revelados, um a um, nos grupos A, B e C.</p>
+          <p>O controle digita um código único de 8 botões. Esse código gera a ordem do sorteio e os inscritos são revelados, um a um, nos grupos, que têm no máximo 4 jogadores.</p>
         </div>
       </header>
       <div class="shell page-body">
@@ -280,7 +292,7 @@
             <div class="reel" id="reel" aria-live="polite">
               <span class="reel-label" id="reel-label">Pronto para sortear</span>
               <strong class="reel-name" id="reel-name">Press start</strong>
-              <span class="reel-sub" id="reel-sub">12 jogadores · 3 grupos · 4 vagas por grupo</span>
+              <span class="reel-sub" id="reel-sub">Grupos de até 4 jogadores</span>
             </div>
 
             <div class="draw-actions">
@@ -306,7 +318,7 @@
         <div class="shell">
           <p class="eyebrow">Fase de grupos</p>
           <h1 id="grupos-titulo" tabindex="-1">Classificação</h1>
-          <p>Dois jogadores avançam por grupo, além dos dois melhores terceiros. Os classificados são confirmados após os 18 jogos.</p>
+          <p>Os dois primeiros de cada grupo avançam; com três grupos, os dois melhores terceiros também. Os classificados são confirmados após todos os jogos.</p>
         </div>
       </header>
       <div class="shell page-body">
@@ -339,14 +351,15 @@
         <div class="shell">
           <p class="eyebrow">Mata-mata</p>
           <h1 id="chaveamento-titulo" tabindex="-1">Chaveamento</h1>
-          <p>Oito classificados, sete partidas e uma taça. Toque em uma partida para lançar o placar.</p>
+          <p>O mata-mata se ajusta à quantidade de grupos: final direta, semifinais ou quartas de final. Toque em uma partida para lançar o placar.</p>
         </div>
       </header>
       <div class="shell page-body">
         <div id="bracket"></div>
         <details class="card rules">
           <summary>Como são definidos os cruzamentos?</summary>
-          <p>1º A × melhor 3º e 1º B × segundo melhor 3º formam o lado esquerdo. 1º C × 2º A e 2º B × 2º C formam o lado direito. Quando necessário, os dois terceiros são trocados para evitar um confronto do mesmo grupo nas quartas. Em caso de empate, informe quem avançou no desempate.</p>
+          <p id="bracket-rules"></p>
+          <p>Em caso de empate, informe quem avançou no desempate.</p>
         </details>
       </div>
     </section>

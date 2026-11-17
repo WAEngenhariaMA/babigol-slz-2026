@@ -12,10 +12,10 @@ class Problem extends Error {
 const invalid = message => { throw new Problem(400, 'invalid', message); };
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const groupKeys = rules.groupNames.flatMap((_, g) => Array.from({ length: 6 }, (_, i) => g + '-' + i));
-const knockoutKeys = ['q0', 'q1', 'q2', 'q3', 's0', 's1', 'final'];
+const knockoutKeys = rules.knockoutKeys(rules.groupNames.length);
 const matchKeys = [...groupKeys, ...knockoutKeys];
 const recordId = /^rec[a-zA-Z0-9]{14}$/;
-const idValid = value => Number.isInteger(value) && value >= 0 && value < rules.names.length;
+const idValid = value => Number.isInteger(value) && value >= 0 && value < rules.MAX_PLAYERS;
 const goalValid = value => (typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value))) &&
   Number.isInteger(Number(value)) && Number(value) >= 0 && Number(value) <= 9999;
 
@@ -25,16 +25,33 @@ function text(value, max, message, optional = false) {
   return value.trim();
 }
 
-function players(value) {
-  if (!Array.isArray(value) || value.length !== rules.names.length ||
-    value.some(player => !idValid(player?.id)) || new Set(value.map(player => player.id)).size !== rules.names.length) {
-    invalid('O cadastro precisa conter os 12 IDs originais.');
+/**
+ * Valida a lista de inscritos. Com `assign`, jogadores sem ID (novas inscrições)
+ * ocupam as vagas livres de menor número.
+ */
+function players(value, assign = false) {
+  if (!Array.isArray(value) || value.length > rules.MAX_PLAYERS) {
+    invalid('O campeonato aceita até ' + rules.MAX_PLAYERS + ' inscritos.');
   }
-  return value.map(({ id, name, nick }) => ({
-    id, name: text(name, 100, 'Informe um nome com até 100 caracteres.'),
-    nick: text(nick, 80, 'O nick deve ter até 80 caracteres.', true),
-  })).sort((a, b) => a.id - b.id);
+  const known = value.filter(player => !(assign && player?.id == null));
+  if (known.some(player => !idValid(player?.id)) || new Set(known.map(player => player.id)).size !== known.length) {
+    invalid('Há inscrições com identificação inválida ou repetida.');
+  }
+  const free = Array.from({ length: rules.MAX_PLAYERS }, (_, id) => id).filter(id => !known.some(player => player.id === id));
+  const list = value.map(entry => {
+    if (!record(entry)) invalid('Inscrição inválida.');
+    return {
+      id: assign && entry.id == null ? free.shift() : entry.id,
+      name: text(entry.name, 100, 'Informe um nome com até 100 caracteres.'),
+      nick: text(entry.nick ?? '', 80, 'O nick deve ter até 80 caracteres.', true),
+    };
+  }).sort((a, b) => a.id - b.id);
+  const labels = list.map(player => (player.nick || player.name).toLocaleLowerCase('pt-BR'));
+  if (new Set(labels).size !== labels.length) invalid('Há jogadores com o mesmo nome ou nick. Diferencie-os pelo nick.');
+  return list;
 }
+
+const sameIds = (a, b) => a.length === b.length && a.every(player => b.some(other => other.id === player.id));
 
 function score(value, knockout = false) {
   if (value === null) return null;
@@ -77,10 +94,14 @@ function validateKnockout(state) {
 function backup(value) {
   if (!record(value)) invalid('Selecione um backup JSON válido.');
   const ordered = players(value.players);
-  const groups = value.groups;
-  if (groups !== null && (!Array.isArray(groups) || groups.length !== 3 ||
-    groups.some(group => !Array.isArray(group) || group.length !== 4 || group.some(id => !idValid(id))) ||
-    new Set(groups.flat()).size !== 12)) invalid('O backup deve conter três grupos de quatro participantes distintos.');
+  const groups = value.groups ?? null;
+  const sizes = rules.groupSizes(ordered.length);
+  if (groups !== null && (!Array.isArray(groups) || !sizes.length || groups.length !== sizes.length ||
+    groups.some((group, g) => !Array.isArray(group) || group.length !== sizes[g] ||
+      group.some(id => !ordered.some(player => player.id === id))) ||
+    new Set(groups.flat()).size !== ordered.length)) {
+    invalid('Os grupos do backup não correspondem aos inscritos.');
+  }
 
   let draw = null;
   if (value.draw != null) {
@@ -99,6 +120,8 @@ function backup(value) {
     ko: scoreMap(value.ko, knockoutKeys, true),
   };
   if (!groups && Object.keys(state.scores).length) invalid('O backup contém placares sem grupos sorteados.');
+  const valid = new Set(rules.fixtures(state).map(match => match.key));
+  if (Object.keys(state.scores).some(key => !valid.has(key))) invalid('O backup contém placares de partidas inexistentes.');
   validateKnockout(state);
   return state;
 }
@@ -142,9 +165,16 @@ function restoreBudget(value, current) {
 function change(action, input, current) {
   const { state, budget } = current;
   switch (action) {
-    case 'participantes':
-      return { state: { ...state, players: players(input.players) } };
+    case 'participantes': {
+      const list = players(input.players, true);
+      if (!state.groups || sameIds(list, state.players)) return { state: { ...state, players: list } };
+      if (input.confirm !== true) invalid('Confirme que o sorteio e os placares serão apagados.');
+      return { state: { ...state, players: list, groups: null, scores: {}, ko: {}, draw: null } };
+    }
     case 'sorteio': {
+      if (state.players.length < rules.MIN_PLAYERS) {
+        invalid('Inscreva pelo menos ' + rules.MIN_PLAYERS + ' jogadores para fazer o sorteio.');
+      }
       if (state.groups && input.confirm !== true) invalid('Confirme que o sorteio anterior será substituído.');
       const seed = randomInt(8 ** 8);
       return { state: { ...state, groups: rules.drawGroupsFromSeed(state.players, seed),
@@ -152,7 +182,7 @@ function change(action, input, current) {
     }
     case 'placares': {
       if (!state.groups) invalid('Faça o sorteio antes de registrar placares.');
-      const scores = scoreMap(input.scores, groupKeys);
+      const scores = scoreMap(input.scores, rules.fixtures(state).map(match => match.key));
       const changed = JSON.stringify(scores) !== JSON.stringify(state.scores);
       if (changed && Object.keys(state.ko).length && input.confirm !== true) {
         invalid('Confirme o descarte dos placares do mata-mata.');
