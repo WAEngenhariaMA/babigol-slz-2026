@@ -303,7 +303,7 @@ function renderJourney(completedGames, koDone, champion, koReady) {
     ['shuffle', 'Sorteio', data.groups ? 'Grupos definidos' : sizes.length ? describeSizes(sizes) : 'Mínimo de ' + MIN_PLAYERS + ' inscritos',
       Boolean(data.groups), 'sorteio'],
     ['table', 'Fase de grupos', completedGames + '/' + games + ' jogos', games > 0 && completedGames === games, 'grupos'],
-    ['bracket', 'Mata-mata', before ? Math.min(koDone, before) + '/' + before + ' jogos' : 'Final direta',
+    ['bracket', 'Mata-mata', !sizes.length ? 'Conforme os grupos' : before ? Math.min(koDone, before) + '/' + before + ' jogos' : 'Final direta',
       before ? koDone >= before : koReady, 'chaveamento'],
     ['trophy', 'Grande final', champion == null ? '21 de novembro' : escapeHtml(playerLabel(champion)), champion != null, 'chaveamento'],
   ];
