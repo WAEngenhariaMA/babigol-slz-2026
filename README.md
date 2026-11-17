@@ -10,11 +10,23 @@ Site oficial do campeonato de FIFA 26 Pro Clubs para PC, Xbox e PS5.
 
 O HTML, o CSS, os assets e o JavaScript do navegador são publicados como arquivos estáticos. A função Node.js `/api/campeonato` autentica o administrador, valida as operações e acessa o Airtable. `rules.js` contém as regras de sorteio, classificação e mata-mata usadas nos dois lados.
 
-O Airtable fornece os 12 participantes, os registros das 25 partidas, o controle do sorteio e o orçamento. As atualizações usam os IDs existentes. Criar um item do orçamento é a única operação de edição que cria um registro de dados. Desativar e restaurar alteram o checkbox `Ativo` do mesmo item.
+O Airtable fornece as 12 vagas de participantes (IDs 0 a 11), os registros das 25 partidas, o controle do sorteio e o orçamento. Uma vaga com o campo Participante vazio está livre: as inscrições são feitas na hora pelo site e ocupam a vaga livre de menor número. As atualizações usam os IDs existentes. Criar um item do orçamento é a única operação de edição que cria um registro de dados. Desativar e restaurar alteram o checkbox `Ativo` do mesmo item.
 
 A função mantém um cache de leitura de 35 segundos por instância. A página consulta periodicamente enquanto estiver visível e fora de edição. A versão retornada pela API representa uma revisão e o conteúdo lido. Cada gravação verifica essa versão e reserva uma operação na tabela `Controle`. Registros internos com prefixo `__babigol_v3_write:` guardam a operação e os valores anteriores enquanto ela está em andamento. A API só confirma a gravação após verificar os campos gravados. Se a compensação falhar, a opção **Recuperar gravação** verifica a operação pendente depois de dois minutos e restaura os valores quando for seguro. Edite pelo site para que as gravações usem esse controle. A API do Airtable não fornece uma transação entre tabelas nem uma condição atômica sobre a revisão.
 
 Os visitantes veem apenas itens ativos. O custo por pessoa é calculado pelo total dividido pela quantidade de pessoas. A cota sugerida é configurável e determina, com o rateio, a arrecadação e a reserva previstas.
+
+## Grupos e mata-mata conforme os inscritos
+
+O sorteio é liberado a partir de 4 inscritos (máximo de 12). Os grupos têm no máximo 4 jogadores e são formados com o menor número de grupos possível, o mais equilibrado possível:
+
+| Inscritos | Grupos | Mata-mata |
+| --- | --- | --- |
+| 4 | 1 de 4 | Final entre 1º e 2º |
+| 5 a 8 | 2 grupos (5: 3+2, 6: 3+3, 7: 4+3, 8: 4+4) | Semifinais 1º A × 2º B e 1º B × 2º A, depois final |
+| 9 a 12 | 3 grupos (9: 3+3+3, 10: 4+3+3, 11: 4+4+3, 12: 4+4+4) | Quartas com os 2 primeiros de cada grupo e os 2 melhores 3º, semifinais e final |
+
+Grupos de 4 jogam 6 partidas (3 rodadas de 2), grupos de 3 jogam 3 e grupos de 2 jogam 1. Com grupos de tamanhos diferentes, os terceiros são comparados pela média de pontos, saldo e gols por jogo. Alterar a lista de inscritos depois do sorteio apaga o sorteio e os placares; editar nome ou nick não apaga.
 
 ## API
 

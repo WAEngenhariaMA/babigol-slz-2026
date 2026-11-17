@@ -6,7 +6,7 @@ const rules = require('../rules');
 const { handler } = require('../api/campeonato');
 const { createStore, bases } = require('../server/airtable');
 const { backup, money } = require('../server/domain');
-const { mockAirtable } = require('./fixtures/airtable.cjs');
+const { mockAirtable, legacyNames } = require('./fixtures/airtable.cjs');
 
 const password = 'fixture-tests-only';
 const salt = Buffer.alloc(16, 1);
@@ -43,8 +43,10 @@ async function fixture(t, overrides = {}) {
     origin, async login(who) { assert.equal((await who('login', { password })).status, 200); } };
 }
 
+const roster = count => legacyNames.slice(0, count).map((name, id) => ({ id, name, nick: '' }));
+
 function unitFixtures() {
-  const original = rules.defaults();
+  const original = { ...rules.defaults(), players: roster(12) };
   const groups = rules.drawGroupsFromSeed(original.players, 123);
   const scores = Object.fromEntries(rules.fixtures({ groups }).map(game => [game.key, { a: '2', b: '0' }]));
   return { ...original, groups, scores, draw: { code: rules.drawCode(123), seed: 123 } };
@@ -274,4 +276,113 @@ test('indisponibilidade, credenciais ausentes e bloqueio Preview → Production'
   const fx = await fixture(t);
   fx.fail(req => req.table === 'Participantes' && req.method === 'GET');
   assert.equal((await fx.client()('estado')).value.error, 'airtable');
+});
+
+test('grupos de até 4 conforme a quantidade de inscritos', () => {
+  const expected = { 3: [], 4: [4], 5: [3, 2], 6: [3, 3], 7: [4, 3], 8: [4, 4],
+    9: [3, 3, 3], 10: [4, 3, 3], 11: [4, 4, 3], 12: [4, 4, 4], 13: [] };
+  for (const [count, sizes] of Object.entries(expected)) assert.deepEqual(rules.groupSizes(Number(count)), sizes, count);
+
+  const play = (count, seed = 7) => {
+    const players = roster(count);
+    const groups = rules.drawGroupsFromSeed(players, seed);
+    const state = { ...rules.defaults(), players, groups };
+    state.scores = Object.fromEntries(rules.fixtures(state).map(game => [game.key, { a: String(game.a % 3), b: '1' }]));
+    return state;
+  };
+  // 4 inscritos: um grupo de 4, seis jogos e final direta entre 1º e 2º.
+  const four = play(4);
+  assert.equal(rules.fixtures(four).length, 6);
+  const finalOnly = rules.knockout(rules.qualifiers(four), {});
+  assert.deepEqual(finalOnly.map(game => game.key), ['final']);
+  const top = rules.qualifiers(four).groups[0];
+  assert.deepEqual([finalOnly[0].a, finalOnly[0].b], [top[0].id, top[1].id]);
+  // 6 inscritos: dois grupos de 3, três jogos por grupo, semifinais cruzadas.
+  const six = play(6);
+  assert.deepEqual(six.groups.map(group => group.length), [3, 3]);
+  assert.equal(rules.fixtures(six).length, 6);
+  assert.deepEqual(rules.fixtures(six).filter(game => game.g === 0).map(game => game.round), [1, 2, 3]);
+  const q6 = rules.qualifiers(six);
+  const semis = rules.knockout(q6, {});
+  assert.deepEqual(semis.map(game => game.key), ['s0', 's1', 'final']);
+  assert.deepEqual([semis[0].a, semis[0].b], [q6.groups[0][0].id, q6.groups[1][1].id]);
+  assert.deepEqual([semis[1].a, semis[1].b], [q6.groups[1][0].id, q6.groups[0][1].id]);
+  // 8 inscritos: dois grupos de 4, doze jogos.
+  const eight = play(8);
+  assert.deepEqual(eight.groups.map(group => group.length), [4, 4]);
+  assert.equal(rules.fixtures(eight).length, 12);
+  // 10 inscritos: terceiros de grupos desiguais comparados pela média por jogo.
+  const ten = play(10);
+  assert.deepEqual(ten.groups.map(group => group.length), [4, 3, 3]);
+  assert.equal(rules.fixtures(ten).length, 12);
+  assert.equal(rules.knockout(rules.qualifiers(ten), {}).length, 7);
+  assert.ok(rules.rankThirds({ id: 0, p: 4, j: 3, sg: 0, gp: 0 }, { id: 1, p: 3, j: 2, sg: 0, gp: 0 }) > 0);
+  // Placar incompleto não libera o mata-mata; backups com qualquer quantidade são aceitos.
+  assert.equal(rules.qualifiers({ ...six, scores: {} }), null);
+  assert.deepEqual(backup(six), six);
+  assert.throws(() => backup({ ...six, scores: { ...six.scores, '2-0': { a: '1', b: '0' } } }));
+  assert.throws(() => backup({ ...six, groups: [six.groups.flat()] }));
+});
+
+test('inscrições na hora, sorteio e mata-mata com 6 jogadores', async t => {
+  const fx = await fixture(t);
+  const admin = fx.client();
+  await fx.login(admin);
+  let current = (await admin('estado')).value;
+  const send = (action, input) => admin(action, { ...input, version: current.version });
+  const mutate = async (action, input) => {
+    const result = await send(action, input);
+    assert.equal(result.status, 200, JSON.stringify(result.value));
+    current = result.value;
+    return current.state;
+  };
+  assert.equal(current.state.players.length, 12);
+  await mutate('reiniciar', { confirm: true });
+  assert.deepEqual(current.state.players, []);
+  assert.equal(fx.data.Participantes.filter(row => row.fields.Participante).length, 0);
+  assert.equal((await send('sorteio', {})).status, 400);
+
+  for (const name of ['Ana', 'Bia', 'Caio', 'Duda', 'Edu']) {
+    await mutate('participantes', { players: [...current.state.players, { name, nick: '' }] });
+  }
+  assert.deepEqual(current.state.players.map(player => player.id), [0, 1, 2, 3, 4]);
+  assert.equal((await send('participantes', { players: [...current.state.players, { name: 'Outra', nick: 'ana' }] })).status, 400);
+  await mutate('participantes', { players: [...current.state.players, { name: 'Fábio', nick: 'Fabinho' }] });
+  assert.equal(fx.data.Participantes.find(row => row.fields.ID === 5).fields.Nick, 'Fabinho');
+  const tooMany = [...current.state.players, ...legacyNames.slice(0, 7).map(name => ({ name: name + ' X', nick: '' }))];
+  assert.equal((await send('participantes', { players: tooMany })).status, 400);
+
+  const drawn = await mutate('sorteio', {});
+  assert.deepEqual(drawn.groups.map(group => group.length), [3, 3]);
+  assert.equal(fx.data.Participantes.filter(row => row.fields.Grupo).length, 6);
+  // Remover alguém depois do sorteio exige confirmação e apaga grupos e placares.
+  const fewer = current.state.players.filter(player => player.id !== 2);
+  assert.equal((await send('participantes', { players: fewer })).status, 400);
+  // Editar nome ou nick mantém o sorteio.
+  await mutate('participantes', { players: current.state.players.map(player => ({ ...player, nick: player.nick || player.name + '10' })) });
+  assert.deepEqual(current.state.groups, drawn.groups);
+
+  const scores = Object.fromEntries(rules.fixtures(current.state).map(game => [game.key, { a: '1', b: '0' }]));
+  await mutate('placares', { scores });
+  assert.equal(Object.keys(current.state.scores).length, 6);
+  const qualified = rules.qualifiers(current.state);
+  for (const key of ['s0', 's1', 'final']) {
+    const match = rules.knockout(qualified, current.state.ko).find(game => game.key === key);
+    await mutate('mata-mata', { key, score: { a: '2', b: '1' } });
+    assert.equal(rules.winner(match, current.state.ko), match.a);
+  }
+  assert.equal((await send('mata-mata', { key: 'q0', score: { a: '1', b: '0' } })).status, 400);
+  const exported = (await admin('backup')).value;
+  fx.advance(46_000);
+  const reread = await createStore({ env, fetcher: fx.fetcher, requestInterval: 0, now: fx.now }).read(true);
+  assert.deepEqual(reread.state, current.state);
+
+  await mutate('participantes', { players: fewer.map(({ id, name, nick }) => ({ id, name, nick })), confirm: true });
+  assert.equal(current.state.groups, null);
+  assert.deepEqual(current.state.scores, {});
+  assert.equal(fx.data.Participantes.filter(row => row.fields.Grupo).length, 0);
+  assert.equal(fx.data.Participantes.find(row => row.fields.ID === 2).fields.Participante, undefined);
+  await mutate('importar', { backup: exported, confirm: true });
+  assert.deepEqual(current.state.groups, drawn.groups);
+  assert.equal(Object.keys(current.state.ko).length, 3);
 });

@@ -136,19 +136,27 @@ function createStore({ env = process.env, fetcher = fetch, requestInterval = 225
       list(tables.players), list(tables.matches), list(tables.budget), schema(),
     ]);
     const controlRow = control(rows);
-    const players = uniqueMap(playerRows, 'ID', rules.names.map((_, id) => id),
+    // Cada linha de Participantes é uma vaga (ID 0 a 11); a vaga sem nome está livre.
+    const players = uniqueMap(playerRows, 'ID', Array.from({ length: rules.MAX_PLAYERS }, (_, id) => id),
       value => empty(value) ? NaN : Number(value));
     const matches = uniqueMap(matchRows, 'Chave', matchKeys);
-    const ordered = [...players.entries()].sort(([a], [b]) => a - b);
+    const name = row => String(field(row, 'Participante') ?? '').trim();
+    const slots = [...players.entries()].sort(([a], [b]) => a - b);
+    const ordered = slots.filter(([, row]) => name(row));
+    if (slots.some(([, row]) => !name(row) && !empty(field(row, 'Grupo')))) throw inconsistent();
     const withGroup = ordered.filter(([, row]) => !empty(field(row, 'Grupo')));
     let groups = null;
     if (withGroup.length) {
-      if (withGroup.length !== 12) throw inconsistent();
-      groups = rules.groupNames.map(group => {
-        const members = withGroup.filter(([, row]) => groupLetter(field(row, 'Grupo')) === group)
+      const sizes = rules.groupSizes(ordered.length);
+      if (withGroup.length !== ordered.length || !sizes.length) throw inconsistent();
+      if (withGroup.some(([, row]) => rules.groupNames.indexOf(groupLetter(field(row, 'Grupo'))) >= sizes.length)) {
+        throw inconsistent();
+      }
+      groups = sizes.map((size, g) => {
+        const members = withGroup.filter(([, row]) => groupLetter(field(row, 'Grupo')) === rules.groupNames[g])
           .map(([id, row]) => ({ id, position: field(row, 'Posicao no Grupo') }))
           .sort((a, b) => Number(a.position) - Number(b.position));
-        if (members.length !== 4 || members.some(entry => empty(entry.position))) throw inconsistent();
+        if (members.length !== size || members.some(entry => empty(entry.position))) throw inconsistent();
         const start = Number(members[0].position);
         if ((start !== 0 && start !== 1) || members.some((entry, i) => Number(entry.position) !== start + i)) {
           throw inconsistent();
@@ -171,7 +179,7 @@ function createStore({ env = process.env, fetcher = fetch, requestInterval = 225
     let state;
     try {
       state = backup({ players: ordered.map(([id, row]) => ({
-        id, name: field(row, 'Participante'), nick: field(row, 'Nick') || '',
+        id, name: name(row), nick: field(row, 'Nick') || '',
       })), groups, scores, ko, draw: empty(code) && empty(seed) ? null : { code, seed: Number(seed) } });
     } catch {
       throw inconsistent();
@@ -249,12 +257,13 @@ function createStore({ env = process.env, fetcher = fetch, requestInterval = 225
 
     if (changeSet.state) {
       const { state } = changeSet;
-      for (const player of state.players) {
-        const group = state.groups?.findIndex(ids => ids.includes(player.id)) ?? -1;
-        add(tables.players, player.id, {
-          Participante: player.name, Nick: player.nick || null,
+      for (let id = 0; id < rules.MAX_PLAYERS; id++) {
+        const player = state.players.find(entry => entry.id === id);
+        const group = player ? state.groups?.findIndex(ids => ids.includes(id)) ?? -1 : -1;
+        add(tables.players, id, {
+          Participante: player?.name ?? null, Nick: player?.nick || null,
           Grupo: group === -1 ? null : rules.groupNames[group],
-          'Posicao no Grupo': group === -1 ? null : state.groups[group].indexOf(player.id) + 1,
+          'Posicao no Grupo': group === -1 ? null : state.groups[group].indexOf(id) + 1,
         });
       }
       const fixtures = [...rules.fixtures(state), ...rules.knockout(rules.qualifiers(state), state.ko)];
