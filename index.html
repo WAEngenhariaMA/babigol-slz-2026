@@ -323,8 +323,10 @@
       </header>
       <div class="shell page-body">
         <div class="groups-grid" id="groupcards"></div>
+        <div id="overall"></div>
         <div id="thirds"></div>
         <p id="standings-legend" class="legend" hidden></p>
+        <a class="text-link next-step" href="#chaveamento" data-view="chaveamento">Ver chaveamento <svg class="icon"><use href="#i-arrow"/></svg></a>
       </div>
     </section>
 
@@ -342,6 +344,7 @@
           <div class="score-grid" id="games"></div>
           <div id="score-actions" class="form-footer sticky-footer" hidden><button class="button primary" type="submit" data-edit><svg class="icon"><use href="#i-check"/></svg>Salvar resultados</button></div>
         </form>
+        <a class="text-link next-step" href="#chaveamento" data-view="chaveamento">Ir para o chaveamento <svg class="icon"><use href="#i-arrow"/></svg></a>
       </div>
     </section>
 
@@ -351,7 +354,7 @@
         <div class="shell">
           <p class="eyebrow">Mata-mata</p>
           <h1 id="chaveamento-titulo" tabindex="-1">Chaveamento</h1>
-          <p>O mata-mata se ajusta à quantidade de grupos: final direta, semifinais ou quartas de final. Toque em uma partida para lançar o placar.</p>
+          <p>O mata-mata se ajusta à quantidade de grupos: final direta, semifinais ou quartas de final pela classificação geral. Toque em uma partida para lançar o placar.</p>
         </div>
       </header>
       <div class="shell page-body">
@@ -421,7 +424,7 @@
         <label class="md-team away" for="md-b"><span class="md-avatar" id="md-avatar-b"></span><span class="md-name" id="md-name-b"></span></label>
       </div>
       <div class="md-tie" id="md-tie" hidden>
-        <label for="md-win">Empate: quem avançou no desempate?</label>
+        <label for="md-win" id="md-tie-label">Empate: quem avançou no desempate?</label>
         <select id="md-win"></select>
       </div>
       <p class="md-error" id="md-error" role="alert"></p>

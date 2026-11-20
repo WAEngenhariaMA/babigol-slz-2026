@@ -117,9 +117,13 @@ test('campeonato compartilhado, sorteio, placares, campeão, descarte seletivo e
   assert.equal(new Set(rules.knockout(qualified, {}).slice(0, 4).flatMap(game => [game.a, game.b])).size, 8);
   for (const key of ['q0', 'q1', 'q2', 'q3', 's0', 's1', 'final']) {
     const match = rules.knockout(qualified, current.state.ko).find(game => game.key === key);
-    await mutate('mata-mata', { key, score: key === 'final' ?
-      { a: '0', b: '0', win: String(match.a) } : { a: '2', b: '1', win: '' } });
+    await mutate('mata-mata', { key, score: key === 'final' ? { a: '0', b: '0', win: String(match.a) }
+      : key === 'q0' ? { a: '1', b: '1', win: '' } : { a: '2', b: '1', win: '' } });
+    if (key === 'q0') assert.equal(rules.winner(match, current.state.ko), match.a);
   }
+  const q2 = rules.knockout(qualified, current.state.ko)[2];
+  assert.equal((await admin('mata-mata', { version: current.version, key: 'q2', score: { a: '1', b: '1', win: '' } })).status, 400);
+  assert.equal(rules.winner(q2, current.state.ko), q2.a);
   const champion = () => rules.winner(rules.knockout(qualified, current.state.ko).at(-1), current.state.ko);
   assert.notEqual(champion(), null);
   const exported = (await admin('backup')).value;
@@ -317,6 +321,25 @@ test('grupos de até 4 conforme a quantidade de inscritos', () => {
   assert.equal(rules.fixtures(ten).length, 12);
   assert.equal(rules.knockout(rules.qualifiers(ten), {}).length, 7);
   assert.ok(rules.rankThirds({ id: 0, p: 4, j: 3, sg: 0, gp: 0 }, { id: 1, p: 3, j: 2, sg: 0, gp: 0 }) > 0);
+  // Classificação geral (média por jogo) define as quartas: 1º×8º, 2º×7º, 3º×6º, 4º×5º.
+  const q10 = rules.qualifiers(ten);
+  assert.equal(q10.overall.length, 8);
+  for (let i = 1; i < 8; i++) assert.ok(rules.rankAverage(q10.overall[i - 1], q10.overall[i]) < 0);
+  const seeds = q10.overall.map(row => row.id);
+  const bracket10 = rules.knockout(q10, {});
+  assert.deepEqual(bracket10.slice(0, 4).map(game => [game.a, game.b, game.adv]),
+    [[seeds[0], seeds[7], seeds[0]], [seeds[1], seeds[6], seeds[1]], [seeds[2], seeds[5], null], [seeds[3], seeds[4], null]]);
+  // Empate em Q1/Q2 classifica quem tem a vantagem; em Q3/Q4 exige o desempate.
+  const tied = { q0: { a: '1', b: '1', win: '' }, q1: { a: '0', b: '0', win: '' }, q2: { a: '2', b: '2', win: '' },
+    q3: { a: '1', b: '1', win: String(seeds[4]) } };
+  assert.equal(rules.winner(bracket10[0], tied), seeds[0]);
+  assert.equal(rules.winner(bracket10[1], tied), seeds[1]);
+  assert.equal(rules.winner(bracket10[2], tied), null);
+  const semis10 = rules.knockout(q10, tied);
+  assert.deepEqual([semis10[4].a, semis10[4].b], [seeds[0], seeds[4]]);
+  assert.deepEqual([semis10[5].a, semis10[5].b], [seeds[1], null]);
+  // Média: 4 pts em 3 jogos fica atrás de 3 pts em 2 jogos.
+  assert.ok(rules.rankAverage({ id: 0, p: 4, j: 3, sg: 0, gp: 0 }, { id: 1, p: 3, j: 2, sg: 0, gp: 0 }) > 0);
   // Placar incompleto não libera o mata-mata; backups com qualquer quantidade são aceitos.
   assert.equal(rules.qualifiers({ ...six, scores: {} }), null);
   assert.deepEqual(backup(six), six);

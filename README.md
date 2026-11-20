@@ -24,9 +24,9 @@ O sorteio é liberado a partir de 4 inscritos (máximo de 12). Os grupos têm no
 | --- | --- | --- |
 | 4 | 1 de 4 | Final entre 1º e 2º |
 | 5 a 8 | 2 grupos (5: 3+2, 6: 3+3, 7: 4+3, 8: 4+4) | Semifinais 1º A × 2º B e 1º B × 2º A, depois final |
-| 9 a 12 | 3 grupos (9: 3+3+3, 10: 4+3+3, 11: 4+4+3, 12: 4+4+4) | Quartas com os 2 primeiros de cada grupo e os 2 melhores 3º, semifinais e final |
+| 9 a 12 | 3 grupos (9: 3+3+3, 10: 4+3+3, 11: 4+4+3, 12: 4+4+4) | Classificação geral dos 8 classificados (2 primeiros de cada grupo e 2 melhores 3º) pela média por jogo; quartas 1º×8º, 2º×7º, 3º×6º e 4º×5º; semifinais Q1×Q4 e Q2×Q3; final |
 
-Grupos de 4 jogam 6 partidas (3 rodadas de 2), grupos de 3 jogam 3 e grupos de 2 jogam 1. Com grupos de tamanhos diferentes, os terceiros são comparados pela média de pontos, saldo e gols por jogo. Alterar a lista de inscritos depois do sorteio apaga o sorteio e os placares; editar nome ou nick não apaga.
+Grupos de 4 jogam 6 partidas (3 rodadas de 2), grupos de 3 jogam 3 e grupos de 2 jogam 1. Como os grupos podem ter 3 ou 4 jogadores, a classificação geral e a dos terceiros usam a média de pontos, saldo e gols por jogo. Em Q1 e Q2, o empate no tempo regulamentar classifica o 1º e o 2º gerais, sem prorrogação ou pênaltis; em Q3 e Q4, o empate vai para prorrogação e pênaltis, e o administrador informa quem avançou. Alterar a lista de inscritos depois do sorteio apaga o sorteio e os placares; editar nome ou nick não apaga.
 
 ## API
 
