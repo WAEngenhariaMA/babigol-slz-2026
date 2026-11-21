@@ -1,6 +1,6 @@
 const storageKey = 'babigol2026';
 const soundKey = 'babigol-sound';
-const { groupNames, defaults, hasScore, winner, knockout, rankThirds, sequenceFromSeed, changeKnockout,
+const { groupNames, defaults, hasScore, winner, knockout, classification, sequenceFromSeed, changeKnockout,
   groupSizes, format, knockoutKeys, MAX_PLAYERS, MIN_PLAYERS } = BabigolRules;
 const eventStart = new Date('2026-11-21T11:00:00-03:00');
 const eventEnd = new Date('2026-11-21T16:00:00-03:00');
@@ -241,7 +241,7 @@ function describeFormat(fmt) {
   if (!fmt) return '';
   if (fmt.groups === 1) return 'final entre o 1º e o 2º colocado';
   if (fmt.groups === 2) return 'semifinais cruzadas (1º de um grupo × 2º do outro) e final';
-  return 'quartas com os 2 primeiros de cada grupo e os 2 melhores 3º, semifinais e final';
+  return 'os 2 primeiros de cada grupo e os 2 melhores 3º formam a classificação geral (média por jogo); quartas 1º×8º, 2º×7º, 3º×6º e 4º×5º, semifinais e final';
 }
 
 function describeCount(count) {
@@ -362,9 +362,12 @@ function renderRules() {
   $('bracket-rules').textContent = !fmt ? 'O chaveamento é definido depois do sorteio, conforme a quantidade de grupos.'
     : fmt.groups === 1 ? 'Com um grupo, o 1º e o 2º colocados disputam a final.'
     : fmt.groups === 2 ? 'Semifinal 1: 1º do Grupo A × 2º do Grupo B. Semifinal 2: 1º do Grupo B × 2º do Grupo A. Os vencedores fazem a final.'
-    : '1º A × melhor 3º e 1º B × segundo melhor 3º formam o lado esquerdo. 1º C × 2º A e 2º B × 2º C formam o lado direito. ' +
-      'Quando necessário, os dois terceiros são trocados para evitar um confronto do mesmo grupo nas quartas. ' +
-      'Se os grupos tiverem tamanhos diferentes, os terceiros são comparados pela média de pontos, saldo e gols por jogo.';
+    : 'Os 2 primeiros de cada grupo e os 2 melhores terceiros formam a classificação geral do 1º ao 8º, ' +
+      'ordenada pela média por jogo de pontos, saldo e gols marcados (os grupos podem ter 3 ou 4 jogadores). ' +
+      'Quartas: Q1 1º × 8º, Q2 2º × 7º, Q3 3º × 6º e Q4 4º × 5º. Em Q1 e Q2, empate no tempo regulamentar classifica ' +
+      'o 1º e o 2º gerais, sem prorrogação ou pênaltis. Em Q3 e Q4, empate leva à prorrogação e, se persistir, aos pênaltis. ' +
+      'Semifinal 1: vencedor de Q1 × vencedor de Q4. Semifinal 2: vencedor de Q2 × vencedor de Q3. ' +
+      'Assim, o 1º e o 2º gerais só podem se enfrentar na final.';
 }
 
 function renderGroups(qualified) {
@@ -380,6 +383,7 @@ function renderGroups(qualified) {
     <span>J jogos · V vitórias · E empates · D derrotas · SG saldo · Pts pontos</span>`;
   if (!data.groups) {
     $('groupcards').innerHTML = emptyState('Aguardando sorteio', 'As tabelas serão exibidas assim que os grupos forem definidos.', 'sorteio', 'Ir para o sorteio');
+    $('overall').innerHTML = '';
     $('thirds').innerHTML = '';
     return;
   }
@@ -413,23 +417,45 @@ function renderGroups(qualified) {
   }).join('');
 
   if (!fmt?.thirds) {
+    $('overall').innerHTML = '';
     $('thirds').innerHTML = '';
     return;
   }
-  const uneven = new Set(data.groups.map(group => group.length)).size > 1;
-  const thirds = data.groups.map((_, g) => ({ ...standings(g)[2], g })).sort(rankThirds);
+  const table = classification(data);
+  const status = `<p class="eyebrow">${qualified ? 'Definido' : 'Parcial'}</p>`;
+  const sg = row => `${row.sg > 0 ? '+' : ''}${row.sg} SG`;
+  const opponent = [8, 7, 6, 5, 4, 3, 2, 1];
+  $('overall').innerHTML = `<article class="card thirds-card overall-card">
+    <header>${status}<h2>Classificação geral</h2>
+      <p>Os 2 primeiros de cada grupo e os 2 melhores terceiros, do 1º ao 8º. Como os grupos podem ter 3 ou 4 jogadores, a ordem usa a média por jogo de pontos, saldo e gols marcados. A posição define o confronto das quartas.</p></header>
+    <ol class="thirds-list overall-list">${table.overall.map((row, index) => {
+      const quarter = Math.min(index, 7 - index) + 1;
+      return `
+      <li class="in${index < 2 ? ' adv' : ''}">
+        <span class="t-pos">${index + 1}º</span>${avatar(row.id, 'sm')}
+        <span class="t-name">${escapeHtml(playerLabel(row.id))}<small>${row.place + 1}º do grupo ${groupNames[row.g]}${index < 2 ? ' · vantagem do empate' : ''}</small></span>
+        <span class="t-stat"><strong>${average(row)}</strong> por jogo<small>${plural(row.p, 'pt', 'pts')} em ${row.j} j</small></span>
+        <span class="t-stat t-sg">${sg(row)}</span>
+        <span class="t-tag">Q${quarter} × ${opponent[index]}º</span>
+      </li>`;
+    }).join('')}</ol>
+  </article>`;
   $('thirds').innerHTML = `<article class="card thirds-card">
-    <header><p class="eyebrow">${qualified ? 'Definido' : 'Parcial'}</p><h2>Corrida dos terceiros colocados</h2>
-      <p>Os dois melhores terceiros completam as quartas de final.${uneven ? ' Como os grupos têm tamanhos diferentes, a comparação usa a média por jogo.' : ''}</p></header>
-    <ol class="thirds-list">${thirds.map((row, index) => `
+    <header>${status}<h2>Corrida dos terceiros colocados</h2>
+      <p>Os dois melhores terceiros completam a classificação geral. Como os grupos podem ter tamanhos diferentes, a comparação usa a média por jogo.</p></header>
+    <ol class="thirds-list">${table.thirds.map((row, index) => `
       <li class="${index < 2 ? 'in' : 'out'}">
         <span class="t-pos">${index + 1}º</span>${avatar(row.id, 'sm')}
         <span class="t-name">${escapeHtml(playerLabel(row.id))}<small>3º do grupo ${groupNames[row.g]}</small></span>
-        <span class="t-stat"><strong>${row.p}</strong> pts${uneven ? ' em ' + row.j + ' j' : ''}</span><span class="t-stat">${row.sg > 0 ? '+' : ''}${row.sg} SG</span>
+        <span class="t-stat"><strong>${average(row)}</strong> por jogo<small>${plural(row.p, 'pt', 'pts')} em ${row.j} j</small></span>
+        <span class="t-stat t-sg">${sg(row)}</span>
         <span class="t-tag">${index < 2 ? 'Classifica' : 'Fora'}</span>
       </li>`).join('')}</ol>
   </article>`;
 }
+
+const averageFormat = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const average = row => row.j ? averageFormat.format(row.p / row.j) : '–';
 
 function renderScores(matches) {
   $('score-actions').hidden = matches.length === 0;
@@ -476,12 +502,12 @@ function koInfo(count = groupCount()) {
     };
   }
   return {
-    q0: { short: 'QF1', title: 'Quartas de final · Jogo 1', seeds: ['1º do Grupo A', 'Melhor 3º'] },
-    q1: { short: 'QF2', title: 'Quartas de final · Jogo 2', seeds: ['1º do Grupo B', '2º melhor 3º'] },
-    q2: { short: 'QF3', title: 'Quartas de final · Jogo 3', seeds: ['1º do Grupo C', '2º do Grupo A'] },
-    q3: { short: 'QF4', title: 'Quartas de final · Jogo 4', seeds: ['2º do Grupo B', '2º do Grupo C'] },
-    s0: { short: 'SF1', title: 'Semifinal 1', seeds: ['Vencedor QF1', 'Vencedor QF2'] },
-    s1: { short: 'SF2', title: 'Semifinal 2', seeds: ['Vencedor QF3', 'Vencedor QF4'] },
+    q0: { short: 'Q1', title: 'Quartas de final · Q1', seeds: ['1º geral', '8º geral'], adv: '1º geral' },
+    q1: { short: 'Q2', title: 'Quartas de final · Q2', seeds: ['2º geral', '7º geral'], adv: '2º geral' },
+    q2: { short: 'Q3', title: 'Quartas de final · Q3', seeds: ['3º geral', '6º geral'] },
+    q3: { short: 'Q4', title: 'Quartas de final · Q4', seeds: ['4º geral', '5º geral'] },
+    s0: { short: 'SF1', title: 'Semifinal 1', seeds: ['Vencedor Q1', 'Vencedor Q4'] },
+    s1: { short: 'SF2', title: 'Semifinal 2', seeds: ['Vencedor Q2', 'Vencedor Q3'] },
     final,
   };
 }
@@ -498,7 +524,9 @@ function bracketMatch(key, match) {
     const state = decided == null ? '' : decided === id ? 'win' : 'lose';
     return `<span class="bm-team ${state} ${known ? '' : 'tbd'}">
       ${known ? avatar(id, 'sm') : '<span class="avatar sm empty" aria-hidden="true"></span>'}
-      <span class="bm-name">${escapeHtml(known ? playerLabel(id) : seed)}${tie && state === 'win' ? '<abbr class="pen" title="Venceu no desempate">P</abbr>' : ''}</span>
+      <span class="bm-name">${escapeHtml(known ? playerLabel(id) : seed)}${tie && state === 'win' ? (info.adv
+        ? '<abbr class="pen" title="Avançou pela vantagem do empate">V</abbr>'
+        : '<abbr class="pen" title="Venceu na prorrogação ou nos pênaltis">P</abbr>') : ''}</span>
       <span class="bm-score">${played ? escapeHtml(goals) : ''}</span>
     </span>`;
   };
@@ -507,7 +535,7 @@ function bracketMatch(key, match) {
   const labelB = match?.b != null ? playerLabel(match.b) : info.seeds[1];
   const aria = `${info.title}: ${labelA}${played ? ` ${score.a} × ${score.b} ` : ' contra '}${labelB}. ${status}`;
   return `<button type="button" class="bm ${key === 'final' ? 'bm-final' : ''} ${played ? 'played' : ''}" data-match="${key}" data-ready="${Boolean(ready)}" ${ready && canEdit() ? '' : 'disabled'} aria-label="${escapeHtml(aria)}">
-    <span class="bm-head"><span>${info.short}</span><span class="bm-status">${ready && !played ? icon('edit') : ''}${status}</span></span>
+    <span class="bm-head"><span${info.adv ? ` title="Empate no tempo regulamentar classifica o ${info.adv}"` : ''}>${info.short}${info.adv ? '<small class="bm-adv">· vant. empate</small>' : ''}</span><span class="bm-status">${ready && !played ? icon('edit') : ''}${status}</span></span>
     ${team(match?.a ?? null, info.seeds[0], score.a)}
     ${team(match?.b ?? null, info.seeds[1], score.b)}
   </button>`;
@@ -550,10 +578,10 @@ function renderBracket(matches, completedGames) {
     }),
     3: () => ({
       labels: ['Quartas', 'Semifinal', 'Final', 'Semifinal', 'Quartas'],
-      columns: `<div class="b-col q left"><p class="col-label">Quartas · Lado esquerdo</p>${slot('q0')}${slot('q1')}</div>
+      columns: `<div class="b-col q left"><p class="col-label">Quartas · Lado esquerdo</p>${slot('q0')}${slot('q3')}</div>
         <div class="b-col s left"><p class="col-label">Semifinal 1</p>${slot('s0')}</div>${center}
         <div class="b-col s right"><p class="col-label">Semifinal 2</p>${slot('s1')}</div>
-        <div class="b-col q right"><p class="col-label">Quartas · Lado direito</p>${slot('q2')}${slot('q3')}</div>`,
+        <div class="b-col q right"><p class="col-label">Quartas · Lado direito</p>${slot('q1')}${slot('q2')}</div>`,
     }),
   };
   const { labels, columns } = layouts[count]();
@@ -1066,7 +1094,12 @@ async function saveScores(event) {
     danger: true,
   }))) return;
   if (await mutate('placares', { scores, confirm: true }, version)) {
-    notify('Resultados salvos. A classificação foi atualizada.');
+    if (currentKnockout().length) {
+      notify('Fase de grupos concluída. Confira o chaveamento do mata-mata.');
+      showView('chaveamento');
+    } else {
+      notify('Resultados salvos. A classificação foi atualizada.');
+    }
   }
 }
 
@@ -1095,6 +1128,11 @@ function openMatch(key) {
   $('md-win').innerHTML = `<option value="">Selecione</option>` + [match.a, match.b].map(id =>
     `<option value="${id}"${score.win === String(id) ? ' selected' : ''}>${escapeHtml(playerLabel(id))}</option>`).join('');
   $('md-error').textContent = '';
+  const adv = match.adv != null;
+  $('md-win').hidden = adv;
+  $('md-tie-label').textContent = adv
+    ? `Empate: ${playerLabel(match.adv)} avança pela vantagem do empate, sem prorrogação ou pênaltis.`
+    : 'Empate: quem avançou na prorrogação ou nos pênaltis?';
   updateTie();
   $('match-dialog').showModal();
   $('md-a').focus();
@@ -1140,7 +1178,8 @@ async function saveMatch(event) {
     return;
   }
   const score = { a: a.value, b: b.value, win: '' };
-  if (hasScore(score) && Number(score.a) === Number(score.b)) {
+  const adv = currentKnockout().find(entry => entry.key === editingKey)?.adv;
+  if (hasScore(score) && Number(score.a) === Number(score.b) && adv == null) {
     score.win = $('md-win').value;
     if (!score.win) {
       $('md-error').textContent = 'Empate: selecione quem avançou no desempate.';

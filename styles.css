@@ -678,6 +678,13 @@ tr.qualified { background: linear-gradient(90deg, rgba(251, 241, 212, .8), trans
 .t-stat strong { font-family: var(--font-tech); color: var(--navy-900); font-size: 1.05rem; }
 .t-tag { padding: 4px 10px; border-radius: 999px; font-family: var(--font-display); font-weight: 700; font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; background: var(--bg-tint); color: var(--muted); }
 .in .t-tag { background: var(--blue-500); color: var(--white); }
+.t-stat small { display: block; font-size: .78rem; }
+.overall-card { margin-top: 28px; }
+.overall-list li.in { background: linear-gradient(90deg, #fbf3dc, var(--white) 70%); border-color: #ecd9a4; }
+.overall-list li.adv .t-tag { background: var(--navy-900); color: var(--gold-300); }
+.overall-list .t-tag { background: var(--gold-500); color: var(--navy-900); }
+.next-step { display: inline-flex; margin-top: 22px; }
+.bm-adv { margin-left: 6px; font-size: .6rem; letter-spacing: .06em; text-transform: uppercase; opacity: .7; white-space: nowrap; }
 
 /* ---------- Scores ---------- */
 .score-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: start; }
@@ -915,7 +922,8 @@ tfoot .num { font-family: var(--font-tech); }
   .draw-console { padding: 20px; }
   .opt { display: none; }
   .thirds-list li { grid-template-columns: 30px auto 1fr auto; gap: 10px; }
-  .thirds-list .t-stat:nth-of-type(2), .thirds-list .t-tag { display: none; }
+  .thirds-list .t-sg, .thirds-list .t-tag { display: none; }
+  .overall-list .t-tag { display: inline-block; grid-column: 3 / -1; justify-self: start; }
   .page-head { padding: 40px 0 46px; }
   .page-head::after { width: 160px; opacity: .08; }
   .bar-col { display: none; }

@@ -62,7 +62,8 @@ function score(value, knockout = false) {
   const result = { a: String(Number(a)), b: String(Number(b)) };
   if (knockout) {
     result.win = '';
-    if (result.a === result.b) {
+    // Em Q1 e Q2 o empate classifica quem tem a vantagem, sem desempate; o confronto é conferido depois.
+    if (result.a === result.b && win != null && win !== '') {
       if (!goalValid(win) || !idValid(Number(win))) invalid('Selecione quem avançou no desempate.');
       result.win = String(Number(win));
     }
@@ -193,7 +194,10 @@ function change(action, input, current) {
       const match = rules.knockout(rules.qualifiers(state), state.ko).find(game => game.key === input.key);
       if (!match || match.a == null || match.b == null) invalid('Os dois participantes do confronto precisam estar definidos.');
       const entry = score(input.score, true);
-      if (entry && rules.winner(match, { [match.key]: entry }) == null) invalid('O vencedor do desempate deve disputar o confronto.');
+      if (entry && match.adv != null) entry.win = '';
+      if (entry && rules.winner(match, { [match.key]: entry }) == null) {
+        invalid(entry.win ? 'O vencedor do desempate deve disputar o confronto.' : 'Selecione quem avançou no desempate.');
+      }
       const { ko, discarded } = rules.changeKnockout(state, match.key, entry);
       if (discarded.length && input.confirm !== true) invalid('Confirme o descarte dos placares dependentes.');
       return { state: { ...state, ko } };

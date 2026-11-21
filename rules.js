@@ -99,27 +99,42 @@
     return b.p - a.p || b.sg - a.sg || b.gp - a.gp || a.id - b.id;
   }
 
-  // Terceiros de grupos com tamanhos diferentes são comparados pela média por jogo.
-  // Com o mesmo número de jogos, o resultado é igual ao de `rank`.
-  function rankThirds(a, b) {
+  // Grupos podem ter tamanhos diferentes, então a classificação geral e a dos terceiros
+  // comparam a média por jogo (pontos, saldo e gols). Com o mesmo número de jogos, equivale a `rank`.
+  function rankAverage(a, b) {
     const per = (x, y, key) => y[key] * Math.max(x.j, 1) - x[key] * Math.max(y.j, 1);
     return per(a, b, 'p') || per(a, b, 'sg') || per(a, b, 'gp') || a.id - b.id;
+  }
+
+  /**
+   * Classificação a partir dos placares lançados até agora (parcial ou definitiva).
+   * Com três grupos: os 2 primeiros de cada grupo e os 2 melhores terceiros formam a
+   * classificação geral (1º a 8º), ordenada pela média por jogo.
+   */
+  function classification(data) {
+    const shape = data.groups && format(data.groups.length);
+    if (!shape) return null;
+    const groups = data.groups.map((_, g) => standings(data, g).map((row, place) => ({ ...row, g, place })));
+    const thirds = shape.thirds ? groups.filter(rows => rows[2]).map(rows => rows[2]).sort(rankAverage) : [];
+    const overall = shape.thirds
+      ? [...groups.flatMap(rows => rows.slice(0, 2)), ...thirds.slice(0, shape.thirds)].sort(rankAverage)
+      : [];
+    return { groups, thirds, overall };
   }
 
   function qualifiers(data, matches = fixtures(data)) {
     const shape = data.groups && format(data.groups.length);
     if (!shape || !matches.length || !matches.every(match => hasScore(data.scores[match.key]))) return null;
-    const groups = data.groups.map((_, g) => standings(data, g));
-    const thirds = shape.thirds ? groups.filter(rows => rows[2]).map(rows => ({ ...rows[2], g: groups.indexOf(rows) }))
-      .sort(rankThirds) : [];
-    return { groups, thirds };
+    return classification(data);
   }
 
+  // `adv` é quem tem a vantagem do empate: empate no tempo regulamentar o classifica direto.
   function winner(match, scores) {
     const score = scores[match.key];
     if (match.a == null || match.b == null || !hasScore(score)) return null;
     const a = Number(score.a);
     const b = Number(score.b);
+    if (a === b && match.adv != null) return match.adv;
     if (a > b || (a === b && score.win === String(match.a))) return match.a;
     if (b > a || (a === b && score.win === String(match.b))) return match.b;
     return null;
@@ -127,23 +142,21 @@
 
   function knockout(qualified, scores) {
     if (!qualified) return [];
-    const { groups, thirds } = qualified;
+    const { groups } = qualified;
     if (groups.length === 1) return [{ key: 'final', a: groups[0][0].id, b: groups[0][1].id }];
     if (groups.length === 2) {
       const [a, b] = groups;
       const semis = [{ key: 's0', a: a[0].id, b: b[1].id }, { key: 's1', a: b[0].id, b: a[1].id }];
       return [...semis, { key: 'final', a: winner(semis[0], scores), b: winner(semis[1], scores) }];
     }
-    const [a, b, c] = groups;
-    const pair = thirds.slice(0, 2);
-    if (pair[0].g === 0 || pair[1].g === 1) {
-      if (pair[1].g !== 0 && pair[0].g !== 1) pair.reverse();
-    }
-    const quarters = [[a[0].id, pair[0].id], [b[0].id, pair[1].id], [c[0].id, a[1].id], [b[1].id, c[1].id]]
-      .map(([home, away], i) => ({ key: `q${i}`, a: home, b: away }));
+    // Quartas pela classificação geral: 1º×8º e 2º×7º (vantagem do empate para o melhor), 3º×6º e 4º×5º.
+    // Semifinal 1: vencedores de Q1 e Q4; Semifinal 2: vencedores de Q2 e Q3.
+    const seed = qualified.overall.map(row => row.id);
+    const quarters = [[0, 7, true], [1, 6, true], [2, 5, false], [3, 4, false]]
+      .map(([home, away, adv], i) => ({ key: `q${i}`, a: seed[home], b: seed[away], adv: adv ? seed[home] : null }));
     const semis = [
-      { key: 's0', a: winner(quarters[0], scores), b: winner(quarters[1], scores) },
-      { key: 's1', a: winner(quarters[2], scores), b: winner(quarters[3], scores) },
+      { key: 's0', a: winner(quarters[0], scores), b: winner(quarters[3], scores) },
+      { key: 's1', a: winner(quarters[1], scores), b: winner(quarters[2], scores) },
     ];
     return [...quarters, ...semis, { key: 'final', a: winner(semis[0], scores), b: winner(semis[1], scores) }];
   }
@@ -206,6 +219,6 @@
   }
 
   return { MAX_PLAYERS, MIN_PLAYERS, GROUP_LIMIT, groupNames, defaults, groupSizes, format, knockoutKeys,
-    fixtures, standings, qualifiers, rank, rankThirds, hasScore, winner, knockout, changeKnockout,
+    fixtures, standings, classification, qualifiers, rank, rankAverage, rankThirds: rankAverage, hasScore, winner, knockout, changeKnockout,
     sequenceFromSeed, drawGroupsFromSeed, drawCode };
 });
